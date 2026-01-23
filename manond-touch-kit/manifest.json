@@ -1,0 +1,9 @@
+{
+  "name": "Manond Type Touch Kit",
+  "id": "manond.touch.kit",
+  "version": "1.0.0",
+  "author": "Manond Type Foundry",
+  "description": "Touch Kit for Fontra",
+  "main": "main.js",
+  "categories": ["UI", "Touch"]
+}
