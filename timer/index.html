@@ -5,15 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Manond Type Timer</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&family=IBM+Plex+Sans+Thai:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&family=Noto+Sans+Thai:wght@400;600;700&display=swap" rel="stylesheet">
     <script>
         tailwind.config = {
             darkMode: 'class',
             theme: {
                 extend: {
                     fontFamily: { 
-                        sans: ['Manrope', 'IBM Plex Sans Thai', 'sans-serif'],
-                        thai: ['IBM Plex Sans Thai', 'sans-serif']
+                        // Manrope handles Latin characters/numbers; Noto Sans Thai follows for Thai characters
+                        sans: ['Manrope', 'Noto Sans Thai', 'sans-serif'],
                     },
                     colors: {
                         accent: '#FF5C00',
@@ -27,7 +27,11 @@
         }
     </script>
     <style>
-        body { transition: background-color 0.5s ease, color 0.3s ease; -webkit-tap-highlight-color: transparent; }
+        body { 
+            transition: background-color 0.5s ease, color 0.3s ease; 
+            -webkit-tap-highlight-color: transparent;
+            font-family: 'Manrope', 'Noto Sans Thai', sans-serif;
+        }
         .timer-svg { transform: rotate(-90deg); }
         .progress-ring { transition: stroke-dashoffset 1s linear, stroke 0.5s ease; stroke-linecap: round; }
         .bar { transition: height 1s cubic-bezier(0.4, 0, 0.2, 1); min-height: 2px; border-radius: 4px 4px 0 0; }
@@ -58,9 +62,9 @@
             50% { background-position: 100% 50%; }
             100% { background-position: 0% 50%; }
         }
-        
-        /* Language specific adjustments */
-        [lang="th"] { font-family: 'IBM Plex Sans Thai', sans-serif; }
+
+        /* Ensure Thai text specifically uses Noto Sans Thai when language is switched */
+        [lang="th"] { font-family: 'Manrope', 'Noto Sans Thai', sans-serif; }
     </style>
 </head>
 <body class="bg-bg-light dark:bg-bg-dark text-zinc-900 dark:text-zinc-100 h-screen flex flex-col overflow-hidden selection:bg-accent selection:text-white">
@@ -167,7 +171,6 @@
                 <button class="close-modal opacity-40 hover:opacity-100"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
             </div>
             <div class="flex-1 overflow-y-auto px-8 py-4 no-scrollbar space-y-6">
-                <!-- Theme and Language -->
                 <div class="grid grid-cols-2 gap-4">
                     <div class="space-y-2">
                         <label id="themeLabel" class="text-[10px] font-bold uppercase tracking-widest opacity-50">Theme</label>
@@ -235,7 +238,7 @@
 
     <!-- Analytics Modal -->
     <div id="statsModal" class="fixed inset-0 hidden flex items-center justify-center p-4 modal-backdrop opacity-0 transition-opacity duration-300">
-        <div class="bg-surface-light dark:bg-surface-dark w-full max-w-md max-h-[90vh] rounded-[32px] shadow-2xl border border-zinc-200 dark:border-zinc-800 flex flex-col transform scale-95 transition-transform duration-300">
+        <div class="bg-surface-light dark:bg-surface-dark w-full max-md rounded-[32px] shadow-2xl border border-zinc-200 dark:border-zinc-800 flex flex-col transform scale-95 transition-transform duration-300">
             <div class="flex justify-between items-start p-8 pb-2">
                 <h3 id="statsTitle" class="text-xl font-bold tracking-tight leading-tight">Weekly<br>Analytics</h3>
                 <div class="flex gap-6">
@@ -322,7 +325,9 @@
                 confirmBtn: 'Confirm Reset',
                 cancel: 'Cancel',
                 aiProtocolTitle: '✨ Focus Protocol',
-                aiInsightsTitle: '✨ Performance Review'
+                aiInsightsTitle: '✨ Performance Review',
+                aiLoading: 'Generating your protocol...',
+                aiLoadingInsights: 'Analyzing weekly trends...'
             },
             th: {
                 brandNameMain: 'Manond Type',
@@ -365,7 +370,9 @@
                 confirmBtn: 'ยืนยันการรีเซ็ต',
                 cancel: 'ยกเลิก',
                 aiProtocolTitle: '✨ คำแนะนำเพื่อสมาธิ',
-                aiInsightsTitle: '✨ บทวิเคราะห์การทำงาน'
+                aiInsightsTitle: '✨ บทวิเคราะห์การทำงาน',
+                aiLoading: 'กำลังวิเคราะห์สภาพแวดล้อม...',
+                aiLoadingInsights: 'กำลังประมวลผลแนวโน้มรายสัปดาห์...'
             }
         };
 
@@ -427,28 +434,53 @@
             if (!state.userApiKey) return state.lang === 'th' ? "กรุณาใส่ API KEY ในเมนูการตั้งค่า" : "API KEY MISSING: Please go to Settings.";
             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${state.userApiKey}`;
             const payload = { contents: [{ parts: [{ text: prompt }] }], systemInstruction: { parts: [{ text: systemPrompt }] } };
-            try {
-                const response = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-                const data = await response.json();
-                return data.candidates?.[0]?.content?.parts?.[0]?.text || "Error processing AI request.";
-            } catch (err) { return "CONNECTION ERROR."; }
+            
+            let retries = 5;
+            let delay = 1000;
+            
+            while (retries > 0) {
+                try {
+                    const response = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                    const data = await response.json();
+                    if (data.candidates?.[0]?.content?.parts?.[0]?.text) {
+                        return data.candidates[0].content.parts[0].text;
+                    }
+                    throw new Error("Invalid response");
+                } catch (err) {
+                    retries--;
+                    if (retries === 0) return state.lang === 'th' ? "ไม่สามารถเชื่อมต่อกับ AI ได้ในขณะนี้" : "CONNECTION ERROR: Please check your key or internet.";
+                    await new Promise(res => setTimeout(res, delay));
+                    delay *= 2;
+                }
+            }
         }
 
         async function generateFocusProtocol() {
             const t = translations[state.lang];
-            openModal('aiModal'); document.getElementById('aiTitle').innerText = t.aiProtocolTitle;
-            document.getElementById('aiContent').innerText = state.lang === 'th' ? "กำลังวิเคราะห์สภาพแวดล้อม..." : "Analyzing your environment...";
-            const result = await callGemini(`I have a ${state.workTime / 60} minute session. My goal is ${state.dailyGoal} sessions.`, `You are a high-performance coach. Give 3 short tips in ${state.lang === 'th' ? 'Thai' : 'English'}.`);
+            openModal('aiModal'); 
+            document.getElementById('aiTitle').innerText = t.aiProtocolTitle;
+            document.getElementById('aiContent').innerText = t.aiLoading;
+            
+            const prompt = `I am currently starting a ${state.workTime / 60} minute deep work session. My daily goal is ${state.dailyGoal} sessions. Suggest a short 3-point protocol for maximum focus.`;
+            const systemPrompt = `You are a productivity expert. Respond ONLY in ${state.lang === 'th' ? 'Thai' : 'English'}. Keep it concise and professional.`;
+            
+            const result = await callGemini(prompt, systemPrompt);
             document.getElementById('aiContent').innerText = result;
         }
 
         async function generatePerformanceReview() {
             const t = translations[state.lang];
             if (!state.userApiKey) { openModal('aiModal'); document.getElementById('aiContent').innerText = translations[state.lang].apiKeyNote; return; }
-            openModal('aiModal'); document.getElementById('aiTitle').innerText = t.aiInsightsTitle;
-            document.getElementById('aiContent').innerText = state.lang === 'th' ? "กำลังประมวลผลแนวโน้มรายสัปดาห์..." : "Processing weekly trends...";
+            
+            openModal('aiModal'); 
+            document.getElementById('aiTitle').innerText = t.aiInsightsTitle;
+            document.getElementById('aiContent').innerText = t.aiLoadingInsights;
+            
             const history = Object.entries(state.stats).slice(-7).map(([date, count]) => `${date}: ${count} sessions`).join(', ');
-            const result = await callGemini(`Weekly history: ${history || 'No data'}. Goal: ${state.dailyGoal}.`, `You are a productivity analyst. Provide 2-3 sentences evaluation in ${state.lang === 'th' ? 'Thai' : 'English'}.`);
+            const prompt = `Weekly history: ${history || 'No data yet'}. Goal: ${state.dailyGoal} sessions per day. Analyze trends and give a motivation boost.`;
+            const systemPrompt = `You are a performance psychologist. Respond ONLY in ${state.lang === 'th' ? 'Thai' : 'English'}. Provide a brief 2-3 sentence analysis.`;
+            
+            const result = await callGemini(prompt, systemPrompt);
             document.getElementById('aiContent').innerText = result;
         }
 
@@ -583,7 +615,7 @@
             const container = document.getElementById('graphContainer');
             const labels = document.getElementById('graphLabels');
             container.innerHTML = ''; labels.innerHTML = '';
-            const days = state.lang === 'th' ? ['อ', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'] : ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+            const days = state.lang === 'th' ? ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'] : ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
             const curr = new Date();
             let totalSessions = 0, todaySessions = 0;
             const todayStr = curr.toISOString().split('T')[0];
