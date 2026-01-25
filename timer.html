@@ -63,6 +63,14 @@
         .dark .unlock-track {
             background: rgba(255, 255, 255, 0.05);
         }
+
+        /* Switch Styling */
+        .switch { position: relative; display: inline-block; width: 34px; height: 20px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: #FF5C00; }
+        input:checked + .slider:before { transform: translateX(14px); }
     </style>
 </head>
 <body class="bg-bg-light dark:bg-bg-dark text-zinc-900 dark:text-zinc-100 h-screen flex flex-col overflow-hidden selection:bg-accent selection:text-white">
@@ -134,9 +142,14 @@
         </div>
     </main>
 
+    <!-- Footer / Version -->
+    <footer class="absolute bottom-6 left-6 z-40">
+        <span id="versionLabel" class="text-[8px] font-bold uppercase tracking-[0.2em] opacity-20 transition-opacity">2026.1.25</span>
+    </footer>
+
     <!-- Settings Modal -->
     <div id="settingsModal" class="fixed inset-0 hidden flex items-center justify-center p-4 modal-backdrop opacity-0 transition-opacity duration-300">
-        <div class="bg-surface-light dark:bg-surface-dark w-full max-sm rounded-[32px] shadow-2xl border border-zinc-200 dark:border-zinc-800 p-8 transform scale-95 transition-transform duration-300">
+        <div class="bg-surface-light dark:bg-surface-dark w-full max-w-sm rounded-[32px] shadow-2xl border border-zinc-200 dark:border-zinc-800 p-8 transform scale-95 transition-transform duration-300">
             <div class="flex justify-between items-center mb-8">
                 <h3 class="text-xl font-bold tracking-tight">Settings</h3>
                 <button class="close-modal opacity-40 hover:opacity-100"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
@@ -175,6 +188,17 @@
                     <div class="bg-zinc-50 dark:bg-zinc-900 p-4 rounded-2xl border border-zinc-200 dark:border-zinc-700 space-y-4">
                         <input type="range" id="volumeSlider" min="0" max="1" step="0.05" class="w-full">
                         <button id="testAlarmBtn" class="w-full py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 text-[10px] font-bold uppercase tracking-widest hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors">Test Bell</button>
+                    </div>
+                </div>
+
+                <div class="space-y-2">
+                    <label class="text-[10px] font-bold uppercase tracking-widest opacity-50">Display</label>
+                    <div class="bg-zinc-50 dark:bg-zinc-900 p-4 rounded-2xl border border-zinc-200 dark:border-zinc-700 flex justify-between items-center">
+                        <span class="text-[10px] font-bold uppercase opacity-70">Show Version Tag</span>
+                        <label class="switch">
+                            <input type="checkbox" id="versionToggle" checked>
+                            <span class="slider"></span>
+                        </label>
                     </div>
                 </div>
             </div>
@@ -223,6 +247,7 @@
             theme: getSaved('theme', 'system'),
             stats: JSON.parse(getSaved('studioStats', '{}')),
             volume: parseFloat(getSaved('volume', 0.5)),
+            showVersion: getSaved('showVersion', 'true') === 'true',
             timeLeft: 0, totalTime: 0, timerId: null, isWork: true, isAmbientPlaying: false,
             isAlarmRinging: false
         };
@@ -241,6 +266,8 @@
             const offset = 283 - (state.timeLeft / state.totalTime) * 283;
             document.getElementById('progress').style.strokeDashoffset = offset;
             document.getElementById('progress').style.color = state.isWork ? '#FF5C00' : '#10B981';
+            
+            document.getElementById('versionLabel').style.opacity = state.showVersion ? '0.2' : '0';
         }
 
         function initDots() {
@@ -301,6 +328,10 @@
             const alarm = document.getElementById('alarmSound');
             alarm.volume = state.volume;
             alarm.currentTime = 0;
+            
+            // LOGIC: Alarm only once if recovery ends, otherwise loop.
+            alarm.loop = state.isWork; 
+            
             alarm.play().catch(e => console.log("Playback blocked"));
 
             if (state.isAmbientPlaying) toggleBrownNoise();
@@ -312,12 +343,31 @@
             document.body.classList.add('unlocked-temp');
             
             if (Notification.permission === "granted") new Notification(state.isWork ? "Focus Complete" : "Break Over");
+
+            // AUTOMATIC MOVE TO DEEP WORK IF RECOVERY ENDS
+            if (!state.isWork) {
+                state.isWork = true;
+                state.timeLeft = state.workTime;
+                state.totalTime = state.timeLeft;
+                document.getElementById('statusLabel').textContent = 'Deep Work';
+                document.body.classList.remove('soft-lockdown', 'unlocked-temp');
+                hideUnlockSlider();
+                updateDisplay();
+                
+                // If it was a recovery session, we treat it as stopped once the alarm ends since it doesn't loop
+                if (!alarm.loop) {
+                   alarm.onended = () => {
+                       if (state.isAlarmRinging) stopAlarmAndProceed();
+                   };
+                }
+            }
         }
 
         function stopAlarmOnly() {
             const alarm = document.getElementById('alarmSound');
             alarm.pause();
             alarm.currentTime = 0;
+            alarm.onended = null;
             state.isAlarmRinging = false;
         }
 
@@ -328,15 +378,17 @@
             startBtn.classList.remove('bg-red-500', 'animate-pulse');
             startBtn.className = "h-16 px-10 rounded-full bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 font-bold text-sm uppercase tracking-widest shadow-xl hover:scale-105 active:scale-95 transition-all";
             
-            if (state.isWork) {
+            // totalTime logic to determine what session just ended.
+            // If the totalTime represents a work period and we aren't locked, focus just ended.
+            if (state.totalTime === state.workTime && !document.body.classList.contains('soft-lockdown')) {
                 const today = new Date().toISOString().split('T')[0];
                 state.stats[today] = (state.stats[today] || 0) + 1;
                 setSaved('studioStats', JSON.stringify(state.stats));
                 initDots();
                 openModal('healthModal');
             } else {
-                // End of break - switch to work mode but WAIT for manual start
-                switchMode();
+                startBtn.textContent = 'Start Session';
+                updateDisplay();
             }
         }
 
@@ -508,6 +560,7 @@
             document.getElementById('workInput').value = state.workTime / 60;
             document.getElementById('breakInput').value = state.breakTime / 60;
             document.getElementById('goalInput').value = state.dailyGoal;
+            document.getElementById('versionToggle').checked = state.showVersion;
             openModal('settingsModal');
         });
         document.getElementById('statsBtn').addEventListener('click', () => { renderStats(); openModal('statsModal'); });
@@ -515,9 +568,11 @@
             state.workTime = document.getElementById('workInput').value * 60;
             state.breakTime = document.getElementById('breakInput').value * 60;
             state.dailyGoal = parseInt(document.getElementById('goalInput').value) || 8;
+            state.showVersion = document.getElementById('versionToggle').checked;
             setSaved('workTime', document.getElementById('workInput').value);
             setSaved('breakTime', document.getElementById('breakInput').value);
             setSaved('dailyGoal', state.dailyGoal);
+            setSaved('showVersion', state.showVersion);
             if (!state.timerId) { state.timeLeft = state.isWork ? state.workTime : state.breakTime; state.totalTime = state.timeLeft; updateDisplay(); }
             initDots(); closeModal('settingsModal');
         });
