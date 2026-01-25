@@ -32,37 +32,18 @@
         .dark .modal-backdrop { background: rgba(0, 0, 0, 0.4); }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         
-        /* The layer containing buttons and dots that gets blurred */
         .controls-layer { transition: opacity 0.4s ease, filter 0.4s ease; }
+        .soft-lockdown .controls-layer { opacity: 0.15; filter: blur(8px); pointer-events: none; }
+        .unlocked-temp .controls-layer { opacity: 1; filter: blur(0); pointer-events: auto; }
 
-        .soft-lockdown .controls-layer { 
-            opacity: 0.15; 
-            filter: blur(8px); 
-            pointer-events: none;
-        }
-
-        .unlocked-temp .controls-layer {
-            opacity: 1;
-            filter: blur(0);
-            pointer-events: auto;
-        }
-
-        #unlockSliderContainer {
-            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease;
-            z-index: 30;
-        }
+        #unlockSliderContainer { transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease; z-index: 30; }
 
         input[type=range] { -webkit-appearance: none; background: transparent; cursor: pointer; height: 24px; }
         input[type=range]::-webkit-slider-runnable-track { background: rgba(150, 150, 150, 0.2); height: 4px; border-radius: 2px; }
         input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 16px; width: 16px; border-radius: 50%; background: #FF5C00; margin-top: -6px; }
 
-        .unlock-track {
-            background: rgba(150, 150, 150, 0.1);
-            border: 1px solid rgba(150, 150, 150, 0.2);
-        }
-        .dark .unlock-track {
-            background: rgba(255, 255, 255, 0.05);
-        }
+        .unlock-track { background: rgba(150, 150, 150, 0.1); border: 1px solid rgba(150, 150, 150, 0.2); }
+        .dark .unlock-track { background: rgba(255, 255, 255, 0.05); }
 
         .switch { position: relative; display: inline-block; width: 34px; height: 20px; }
         .switch input { opacity: 0; width: 0; height: 0; }
@@ -70,6 +51,17 @@
         .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
         input:checked + .slider { background-color: #FF5C00; }
         input:checked + .slider:before { transform: translateX(14px); }
+
+        .sparkle-btn {
+            background: linear-gradient(45deg, #FF5C00, #ff8c4d);
+            background-size: 200% 200%;
+            animation: gradientMove 3s ease infinite;
+        }
+        @keyframes gradientMove {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
     </style>
 </head>
 <body class="bg-bg-light dark:bg-bg-dark text-zinc-900 dark:text-zinc-100 h-screen flex flex-col overflow-hidden selection:bg-accent selection:text-white">
@@ -80,17 +72,20 @@
                 Manond Type<br>
                 <span class="text-accent">Timer</span>
             </h1>
-            <div class="flex items-center gap-2 mt-4">
+            <div class="flex items-center gap-3 mt-4">
                 <button id="ambientToggle" class="group flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider opacity-50 hover:opacity-100 transition-opacity">
                     <span class="w-1.5 h-1.5 rounded-full bg-zinc-400 group-[.active]:bg-green-500 transition-colors" id="ambientIndicator"></span>
                     <span id="ambientLabel">Focus Audio</span>
+                </button>
+                <button id="aiProtocolBtn" class="text-[10px] font-bold uppercase tracking-wider text-accent flex items-center gap-1 hover:opacity-80">
+                    ✨ AI Protocol
                 </button>
             </div>
         </div>
 
         <div class="flex gap-2">
             <button id="statsBtn" class="p-3 rounded-2xl bg-white dark:bg-zinc-800 shadow-sm border border-zinc-200 dark:border-zinc-700 hover:scale-105 active:scale-95 transition-all">
-                <svg class="w-5 h-5 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                <svg class="w-5 h-5 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 00-2 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
             </button>
             <button id="settingsBtn" class="p-3 rounded-2xl bg-white dark:bg-zinc-800 shadow-sm border border-zinc-200 dark:border-zinc-700 hover:scale-105 active:scale-95 transition-all flex items-center justify-center">
                 <svg class="w-5 h-5 text-zinc-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -107,7 +102,6 @@
                 <circle cx="50" cy="50" r="45" stroke="currentColor" stroke-width="1.5" fill="none" class="opacity-10"></circle>
                 <circle id="progress" cx="50" cy="50" r="45" stroke="currentColor" stroke-width="4.5" fill="none" class="text-accent progress-ring" stroke-dasharray="283" stroke-dashoffset="0"></circle>
             </svg>
-            
             <div class="absolute inset-0 flex flex-col items-center justify-center text-center">
                 <h2 id="timeDisplay" class="text-7xl font-bold tracking-tighter tabular-nums">50:00</h2>
                 <div class="flex flex-col items-center gap-1 mt-4">
@@ -116,8 +110,7 @@
             </div>
         </div>
 
-        <!-- Guidance text moved OUTSIDE controls-layer so it isn't blurred or blocked -->
-        <div id="guidanceContainer" class="text-center min-h-[1.5rem] flex items-center justify-center mb-8 relative z-40">
+        <div id="guidanceContainer" class="text-center min-h-[1.5rem] flex items-center justify-center mb-8 relative z-40 pointer-events-none">
             <span id="guidanceLabel" class="text-[11px] font-extrabold uppercase tracking-[0.2em] opacity-60">Focus on your high-value tasks.</span>
         </div>
 
@@ -141,7 +134,6 @@
                     </div>
                     <div class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-30">
                         <span class="text-[9px] font-bold uppercase tracking-[0.2em] ml-6">Slide to Unlock</span>
-                        <svg class="w-3 h-3 ml-2 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path></svg>
                     </div>
                 </div>
             </div>
@@ -149,8 +141,24 @@
     </main>
 
     <footer class="absolute bottom-6 left-6 z-40">
-        <span id="versionLabel" class="text-[10px] font-extrabold uppercase tracking-[0.2em] opacity-40 transition-opacity">v.2026.1.11</span>
+        <span id="versionLabel" class="text-[10px] font-extrabold uppercase tracking-[0.2em] opacity-40 transition-opacity">v.2026.1.25</span>
     </footer>
+
+    <!-- Gemini AI Response Modal -->
+    <div id="aiModal" class="fixed inset-0 hidden flex items-center justify-center p-4 modal-backdrop opacity-0 transition-opacity duration-300">
+        <div class="bg-surface-light dark:bg-surface-dark w-full max-w-md max-h-[70vh] rounded-[32px] shadow-2xl border border-zinc-200 dark:border-zinc-800 flex flex-col transform scale-95 transition-transform duration-300 overflow-hidden">
+            <div class="flex justify-between items-center p-8 pb-4">
+                <h3 id="aiTitle" class="text-xl font-bold tracking-tight">✨ Focus Intelligence</h3>
+                <button class="close-modal opacity-40 hover:opacity-100"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
+            </div>
+            <div id="aiContent" class="flex-1 overflow-y-auto px-8 py-4 no-scrollbar text-sm leading-relaxed opacity-80 whitespace-pre-wrap">
+                Generating your protocol...
+            </div>
+            <div class="p-8 pt-4">
+                <button class="close-modal w-full py-4 rounded-2xl bg-zinc-100 dark:bg-zinc-800 font-bold text-xs uppercase tracking-widest">Done</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Modals -->
     <div id="settingsModal" class="fixed inset-0 hidden flex items-center justify-center p-4 modal-backdrop opacity-0 transition-opacity duration-300">
@@ -160,6 +168,7 @@
                 <button class="close-modal opacity-40 hover:opacity-100"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
             </div>
             <div class="flex-1 overflow-y-auto px-8 py-4 no-scrollbar space-y-6">
+                <!-- Theme Section -->
                 <div class="space-y-2">
                     <label class="text-[10px] font-bold uppercase tracking-widest opacity-50">Theme</label>
                     <div class="grid grid-cols-3 gap-2 bg-zinc-100 dark:bg-zinc-800 p-1 rounded-xl">
@@ -168,6 +177,20 @@
                         <button class="theme-opt py-2 rounded-lg text-[10px] font-bold transition-all" data-theme="system">Auto</button>
                     </div>
                 </div>
+
+                <!-- AI Setup Section -->
+                <div class="space-y-2">
+                    <div class="flex justify-between items-center">
+                        <label class="text-[10px] font-bold uppercase tracking-widest opacity-50">AI Configuration</label>
+                        <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-[9px] font-bold text-accent uppercase tracking-widest hover:underline">Get Free Key →</a>
+                    </div>
+                    <div class="bg-zinc-50 dark:bg-zinc-900 p-4 rounded-2xl border border-zinc-200 dark:border-zinc-700 space-y-2">
+                        <input type="password" id="apiKeyInput" placeholder="Paste Gemini API Key here" class="bg-transparent font-bold text-xs outline-none w-full placeholder:opacity-30">
+                        <p class="text-[8px] opacity-40 leading-tight">Key is stored locally in your browser. Features are disabled if empty.</p>
+                    </div>
+                </div>
+
+                <!-- Durations Section -->
                 <div class="space-y-2">
                     <label class="text-[10px] font-bold uppercase tracking-widest opacity-50">Durations (Min) & Goal</label>
                     <div class="grid grid-cols-3 gap-3">
@@ -185,6 +208,7 @@
                         </div>
                     </div>
                 </div>
+
                 <div class="space-y-2">
                     <div class="flex justify-between"><label class="text-[10px] font-bold uppercase tracking-widest opacity-50">Sound Lab</label><span id="volPercent" class="text-[10px] font-bold opacity-50">50%</span></div>
                     <div class="bg-zinc-50 dark:bg-zinc-900 p-4 rounded-2xl border border-zinc-200 dark:border-zinc-700 space-y-4">
@@ -192,16 +216,7 @@
                         <button id="testAlarmBtn" class="w-full py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 text-[10px] font-bold uppercase tracking-widest hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors">Test Bell</button>
                     </div>
                 </div>
-                <div class="space-y-2">
-                    <label class="text-[10px] font-bold uppercase tracking-widest opacity-50">Display</label>
-                    <div class="bg-zinc-50 dark:bg-zinc-900 p-4 rounded-2xl border border-zinc-200 dark:border-zinc-700 flex justify-between items-center">
-                        <span class="text-[10px] font-bold uppercase opacity-70">Show Version Tag</span>
-                        <label class="switch">
-                            <input type="checkbox" id="versionToggle" checked>
-                            <span class="slider"></span>
-                        </label>
-                    </div>
-                </div>
+
                 <div class="space-y-2 pt-2">
                     <label class="text-[10px] font-bold uppercase tracking-widest opacity-50 text-danger">Advanced</label>
                     <button id="factoryResetBtn" class="w-full py-3 rounded-2xl border border-danger/30 text-danger text-[10px] font-bold uppercase tracking-widest hover:bg-danger/5 transition-colors">Clear All Local Data</button>
@@ -213,6 +228,7 @@
         </div>
     </div>
 
+    <!-- Analytics Modal -->
     <div id="statsModal" class="fixed inset-0 hidden flex items-center justify-center p-4 modal-backdrop opacity-0 transition-opacity duration-300">
         <div class="bg-surface-light dark:bg-surface-dark w-full max-w-md max-h-[90vh] rounded-[32px] shadow-2xl border border-zinc-200 dark:border-zinc-800 flex flex-col transform scale-95 transition-transform duration-300">
             <div class="flex justify-between items-start p-8 pb-2">
@@ -230,7 +246,12 @@
             </div>
             <div class="flex-1 overflow-y-auto px-8 py-4 no-scrollbar">
                 <div class="flex items-end justify-between gap-2 h-32 mb-4" id="graphContainer"></div>
-                <div class="flex justify-between px-1 mb-8" id="graphLabels"></div>
+                <div class="flex justify-between px-1 mb-6" id="graphLabels"></div>
+                
+                <button id="aiInsightsBtn" class="w-full py-3 mb-6 rounded-2xl sparkle-btn text-white font-bold text-[10px] uppercase tracking-widest shadow-lg flex items-center justify-center gap-2">
+                    ✨ Generate AI Performance Review
+                </button>
+
                 <div id="mondayResetContainer" class="hidden mb-6 p-4 bg-accent/10 border border-accent/20 rounded-2xl text-center">
                     <p class="text-[10px] font-bold uppercase tracking-widest text-accent mb-3">New Week Detected</p>
                     <button id="confirmWeeklyReset" class="w-full py-3 rounded-xl bg-accent text-white font-bold text-[10px] uppercase tracking-widest shadow-lg shadow-accent/20">Archive & Reset Stats</button>
@@ -242,6 +263,7 @@
         </div>
     </div>
 
+    <!-- Confirm Modal -->
     <div id="confirmModal" class="fixed inset-0 hidden flex items-center justify-center p-4 modal-backdrop opacity-0 transition-opacity duration-300">
         <div class="bg-surface-light dark:bg-surface-dark w-full max-w-[280px] rounded-[32px] shadow-2xl p-8 text-center transform scale-95 transition-transform duration-300">
             <h3 class="text-lg font-bold mb-2">Are you sure?</h3>
@@ -267,6 +289,7 @@
             stats: JSON.parse(getSaved('studioStats', '{}')),
             volume: parseFloat(getSaved('volume', 0.5)),
             showVersion: getSaved('showVersion', 'true') === 'true',
+            userApiKey: getSaved('geminiApiKey', ''),
             lastResetPrompt: getSaved('lastResetPrompt', ''),
             timeLeft: 0, totalTime: 0, timerId: null, isWork: true, isAmbientPlaying: false,
             isAlarmRinging: false
@@ -276,12 +299,76 @@
 
         let audioCtx, brownNoiseNode, gainNode, unlockTimer = null;
 
+        // Gemini API Logic
+        async function callGemini(prompt, systemPrompt) {
+            if (!state.userApiKey) {
+                return "API KEY MISSING: Please go to Settings and enter your Gemini API key to enable AI features.";
+            }
+
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${state.userApiKey}`;
+            const payload = {
+                contents: [{ parts: [{ text: prompt }] }],
+                systemInstruction: { parts: [{ text: systemPrompt }] }
+            };
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                if (response.status === 403) return "INVALID API KEY: The key provided is incorrect or unauthorized.";
+                if (response.status === 429) return "RATE LIMIT EXCEEDED: Too many requests. Please wait a minute.";
+                
+                const data = await response.json();
+                return data.candidates?.[0]?.content?.parts?.[0]?.text || "Unexpected response format from AI.";
+            } catch (err) {
+                return "CONNECTION ERROR: Could not reach the AI server. Check your internet.";
+            }
+        }
+
+        async function generateFocusProtocol() {
+            openModal('aiModal');
+            document.getElementById('aiTitle').innerText = "✨ Focus Protocol";
+            document.getElementById('aiContent').innerText = "Analyzing your environment...";
+
+            const systemPrompt = "You are a high-performance coach. Give 3 short, punchy tips for a deep work session.";
+            const userPrompt = `I have a ${state.workTime / 60} minute session planned. My daily goal is ${state.dailyGoal} sessions. Suggest a tactical approach.`;
+            
+            const result = await callGemini(userPrompt, systemPrompt);
+            document.getElementById('aiContent').innerText = result;
+        }
+
+        async function generatePerformanceReview() {
+            if (!state.userApiKey) {
+                openModal('aiModal');
+                document.getElementById('aiContent').innerText = "Please enter your API key in Settings to use this feature.";
+                return;
+            }
+
+            const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+            const history = Object.entries(state.stats).slice(-7).map(([date, count]) => {
+                const dayName = days[new Date(date).getDay()];
+                return `${dayName}: ${count} sessions`;
+            }).join(', ');
+
+            openModal('aiModal');
+            document.getElementById('aiTitle').innerText = "✨ Performance Review";
+            document.getElementById('aiContent').innerText = "Processing weekly trends...";
+
+            const systemPrompt = "You are a productivity analyst. Provide a brief (2-3 sentence) summary of the user's weekly performance and one 'Pro Tip'.";
+            const userPrompt = `Weekly history: ${history || 'No data yet'}. Goal: ${state.dailyGoal}. Evaluate my consistency.`;
+            
+            const result = await callGemini(userPrompt, systemPrompt);
+            document.getElementById('aiContent').innerText = result;
+        }
+
         function updateDisplay() {
             const m = Math.floor(state.timeLeft / 60);
             const s = state.timeLeft % 60;
             const timeStr = `${m}:${s < 10 ? '0' : ''}${s}`;
             document.getElementById('timeDisplay').textContent = timeStr;
-            document.title = state.timerId ? `${timeStr} • ${state.isWork ? 'Focus' : 'Rest'}` : 'Manond Type Timer';
             
             const progress = document.getElementById('progress');
             const offset = 283 - (state.timeLeft / state.totalTime) * 283;
@@ -289,11 +376,7 @@
             progress.style.color = state.isWork ? '#FF5C00' : '#10B981';
             
             document.getElementById('statusLabel').textContent = state.isWork ? 'Deep Work' : 'Recovery';
-            
-            const guidance = document.getElementById('guidanceLabel');
-            guidance.textContent = state.isWork ? 'Focus on your high-value tasks.' : 'Step away from the screen for a moment.';
-            
-            document.getElementById('versionLabel').style.opacity = state.showVersion ? '0.4' : '0';
+            document.getElementById('guidanceLabel').textContent = state.isWork ? 'Focus on your high-value tasks.' : 'Step away from the screen for a moment.';
         }
 
         function initDots() {
@@ -330,17 +413,8 @@
                 state.stats[today] = (state.stats[today] || 0) + 1;
                 setSaved('studioStats', JSON.stringify(state.stats));
                 initDots();
-                
                 document.body.classList.add('unlocked-temp');
-            } else {
-                alarm.onended = () => {
-                    if (state.isAlarmRinging) {
-                        stopAlarmAndProceed();
-                    }
-                };
             }
-
-            if (Notification.permission === "granted") new Notification(state.isWork ? "Focus Complete" : "Break Over");
         }
 
         function stopAlarmAndProceed() {
@@ -352,23 +426,18 @@
             startBtn.classList.remove('bg-red-500', 'animate-pulse');
             startBtn.className = "h-16 px-10 rounded-full bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 font-bold text-sm uppercase tracking-widest shadow-xl hover:scale-105 active:scale-95 transition-all";
             
-            if (state.isWork) {
-                switchMode(true); 
-            } else {
-                switchMode(false); 
-            }
+            switchMode(); 
         }
 
-        function switchMode(autoStart = false) {
+        function switchMode() {
             state.isWork = !state.isWork;
             state.timeLeft = state.isWork ? state.workTime : state.breakTime;
             state.totalTime = state.timeLeft;
             
             if (!state.isWork) {
-                lockControls();
-                if (autoStart) {
-                    setTimeout(() => startTimer(), 600);
-                }
+                document.body.classList.add('soft-lockdown');
+                document.body.classList.remove('unlocked-temp');
+                showUnlockSlider();
             } else {
                 document.body.classList.remove('soft-lockdown', 'unlocked-temp');
                 hideUnlockSlider();
@@ -379,7 +448,6 @@
 
         function startTimer() {
             if (state.timerId) return;
-            if (Notification.permission === "default") Notification.requestPermission();
             state.timerId = setInterval(() => {
                 state.timeLeft--;
                 updateDisplay();
@@ -388,18 +456,10 @@
             document.getElementById('startBtn').textContent = 'Pause';
         }
 
-        function lockControls() {
-            document.body.classList.add('soft-lockdown');
-            document.body.classList.remove('unlocked-temp');
-            showUnlockSlider();
-        }
-
         function showUnlockSlider() {
             const s = document.getElementById('unlockSliderContainer');
             s.classList.remove('hidden', 'opacity-0', 'translate-y-4');
-            setTimeout(() => {
-                s.classList.add('opacity-100', 'translate-y-0');
-            }, 50);
+            setTimeout(() => s.classList.add('opacity-100', 'translate-y-0'), 50);
         }
 
         function hideUnlockSlider() {
@@ -425,27 +485,12 @@
                 const count = state.stats[dateStr] || 0;
                 totalSessions += count;
                 if(dateStr === todayDateStr) todaySessions = count;
-
                 const height = Math.min((count / state.dailyGoal) * 100, 100);
                 container.innerHTML += `<div class="flex-1 flex flex-col justify-end h-full"><div class="bar w-full ${count >= state.dailyGoal ? 'bg-accent' : 'bg-zinc-200 dark:bg-zinc-700'}" style="height: ${height || 2}%"></div></div>`;
                 labels.innerHTML += `<div class="flex-1 text-center text-[10px] font-bold opacity-30">${days[d.getDay()]}</div>`;
             }
-            
-            const hoursPerSession = state.workTime / 3600;
-            document.getElementById('totalHours').textContent = (totalSessions * hoursPerSession).toFixed(1);
-            document.getElementById('todayHours').textContent = (todaySessions * hoursPerSession).toFixed(1);
-            
-            const isMonday = curr.getDay() === 1;
-            const weekID = `${curr.getFullYear()}-W${getWeekNumber(curr)}`;
-            if (isMonday && state.lastResetPrompt !== weekID) document.getElementById('mondayResetContainer').classList.remove('hidden');
-            else document.getElementById('mondayResetContainer').classList.add('hidden');
-        }
-
-        function getWeekNumber(d) {
-            d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-            d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7));
-            var yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
-            return Math.ceil((((d - yearStart) / 86400000) + 1)/7);
+            document.getElementById('totalHours').textContent = (totalSessions * state.workTime / 3600).toFixed(1);
+            document.getElementById('todayHours').textContent = (todaySessions * state.workTime / 3600).toFixed(1);
         }
 
         function toggleBrownNoise() {
@@ -486,43 +531,24 @@
             setTimeout(() => m.classList.add('hidden'), 300);
         }
 
-        document.getElementById('factoryResetBtn').addEventListener('click', () => openModal('confirmModal'));
-        document.getElementById('executeReset').addEventListener('click', () => { localStorage.clear(); window.location.reload(); });
-        document.getElementById('confirmWeeklyReset').addEventListener('click', () => {
-            state.stats = {}; setSaved('studioStats', '{}');
-            const curr = new Date(); const weekID = `${curr.getFullYear()}-W${getWeekNumber(curr)}`;
-            state.lastResetPrompt = weekID; setSaved('lastResetPrompt', weekID);
-            renderStats(); initDots(); document.getElementById('mondayResetContainer').classList.add('hidden');
-        });
-
+        // Slider Unlock Logic
         const thumb = document.getElementById('unlockThumb');
         const bg = document.getElementById('unlockBg');
         let isDragging = false, startX = 0; const maxSlide = 200;
 
-        thumb.addEventListener('mousedown', e => { isDragging = true; startX = e.clientX; thumb.style.transition = 'none'; });
-        window.addEventListener('mousemove', e => {
+        const startDrag = e => { isDragging = true; startX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX; thumb.style.transition = 'none'; };
+        const moveDrag = e => {
             if (!isDragging) return;
-            let d = Math.max(0, Math.min(e.clientX - startX, maxSlide));
+            let currentX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
+            let d = Math.max(0, Math.min(currentX - startX, maxSlide));
             thumb.style.transform = `translateX(${d}px)`; bg.style.width = `${(d / maxSlide) * 100}%`;
             if (d >= maxSlide) { onUnlock(); isDragging = false; }
-        });
-        window.addEventListener('mouseup', () => { 
+        };
+        const endDrag = () => { 
             if (!isDragging) return; isDragging = false;
             thumb.style.transition = 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
             thumb.style.transform = `translateX(0px)`; bg.style.width = '0%';
-        });
-        thumb.addEventListener('touchstart', e => { isDragging = true; startX = e.touches[0].clientX; thumb.style.transition = 'none'; });
-        window.addEventListener('touchmove', e => {
-            if (!isDragging) return;
-            let d = Math.max(0, Math.min(e.touches[0].clientX - startX, maxSlide));
-            thumb.style.transform = `translateX(${d}px)`; bg.style.width = `${(d / maxSlide) * 100}%`;
-            if (d >= maxSlide) { onUnlock(); isDragging = false; }
-        });
-        window.addEventListener('touchend', () => { 
-            if (!isDragging) return; isDragging = false;
-            thumb.style.transition = 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
-            thumb.style.transform = `translateX(0px)`; bg.style.width = '0%';
-        });
+        };
 
         function onUnlock() {
             document.body.classList.add('unlocked-temp'); hideUnlockSlider();
@@ -534,6 +560,13 @@
             }, 5000);
         }
 
+        // Listeners
+        thumb.addEventListener('mousedown', startDrag); thumb.addEventListener('touchstart', startDrag);
+        window.addEventListener('mousemove', moveDrag); window.addEventListener('touchmove', moveDrag);
+        window.addEventListener('mouseup', endDrag); window.addEventListener('touchend', endDrag);
+
+        document.getElementById('aiProtocolBtn').addEventListener('click', generateFocusProtocol);
+        document.getElementById('aiInsightsBtn').addEventListener('click', generatePerformanceReview);
         document.getElementById('startBtn').addEventListener('click', () => {
             if (state.isAlarmRinging) stopAlarmAndProceed();
             else if (state.timerId) { clearInterval(state.timerId); state.timerId = null; document.getElementById('startBtn').textContent = 'Resume'; }
@@ -543,10 +576,8 @@
         document.getElementById('resetBtn').addEventListener('click', () => {
             const a = document.getElementById('alarmSound'); a.pause(); a.currentTime = 0; state.isAlarmRinging = false;
             clearInterval(state.timerId); state.timerId = null;
-            state.timeLeft = state.isWork ? state.workTime : state.breakTime; state.totalTime = state.timeLeft;
-            const b = document.getElementById('startBtn'); b.textContent = 'Start Session';
-            b.className = "h-16 px-10 rounded-full bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 font-bold text-sm uppercase tracking-widest shadow-xl hover:scale-105 active:scale-95 transition-all";
-            if(!state.isWork) lockControls(); updateDisplay();
+            state.timeLeft = state.isWork ? state.workTime : state.breakTime; updateDisplay();
+            document.getElementById('startBtn').textContent = 'Start Session';
         });
 
         document.getElementById('switchBtn').addEventListener('click', () => stopAlarmAndProceed());
@@ -555,22 +586,24 @@
             document.getElementById('workInput').value = state.workTime / 60;
             document.getElementById('breakInput').value = state.breakTime / 60;
             document.getElementById('goalInput').value = state.dailyGoal;
-            document.getElementById('versionToggle').checked = state.showVersion;
+            document.getElementById('apiKeyInput').value = state.userApiKey;
             openModal('settingsModal');
         });
-        document.getElementById('statsBtn').addEventListener('click', () => { renderStats(); openModal('statsModal'); });
+
         document.getElementById('saveSettings').addEventListener('click', () => {
             state.workTime = document.getElementById('workInput').value * 60;
             state.breakTime = document.getElementById('breakInput').value * 60;
             state.dailyGoal = parseInt(document.getElementById('goalInput').value) || 8;
-            state.showVersion = document.getElementById('versionToggle').checked;
+            state.userApiKey = document.getElementById('apiKeyInput').value.trim();
             setSaved('workTime', document.getElementById('workInput').value);
             setSaved('breakTime', document.getElementById('breakInput').value);
             setSaved('dailyGoal', state.dailyGoal);
-            setSaved('showVersion', state.showVersion);
+            setSaved('geminiApiKey', state.userApiKey);
             if (!state.timerId) { state.timeLeft = state.isWork ? state.workTime : state.breakTime; state.totalTime = state.timeLeft; updateDisplay(); }
             initDots(); closeModal('settingsModal');
         });
+
+        document.getElementById('statsBtn').addEventListener('click', () => { renderStats(); openModal('statsModal'); });
         document.querySelectorAll('.close-modal').forEach(b => b.addEventListener('click', e => closeModal(e.target.closest('[id$="Modal"]').id)));
         document.querySelectorAll('.theme-opt').forEach(b => b.addEventListener('click', () => setTheme(b.dataset.theme)));
         document.getElementById('volumeSlider').addEventListener('input', e => {
@@ -578,9 +611,9 @@
             document.getElementById('volPercent').textContent = Math.round(state.volume * 100) + '%';
             if (gainNode) gainNode.gain.value = state.volume;
         });
-        document.getElementById('testAlarmBtn').addEventListener('click', () => {
-            const a = document.getElementById('alarmSound'); a.volume = state.volume; a.currentTime = 0; a.play(); setTimeout(() => a.pause(), 1500);
-        });
+
+        document.getElementById('factoryResetBtn').addEventListener('click', () => openModal('confirmModal'));
+        document.getElementById('executeReset').addEventListener('click', () => { localStorage.clear(); window.location.reload(); });
 
         setTheme(state.theme); updateDisplay(); initDots();
     </script>
