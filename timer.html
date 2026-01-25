@@ -32,6 +32,7 @@
         .dark .modal-backdrop { background: rgba(0, 0, 0, 0.4); }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         
+        /* The layer containing buttons and dots that gets blurred */
         .controls-layer { transition: opacity 0.4s ease, filter 0.4s ease; }
 
         .soft-lockdown .controls-layer { 
@@ -48,6 +49,7 @@
 
         #unlockSliderContainer {
             transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease;
+            z-index: 30;
         }
 
         input[type=range] { -webkit-appearance: none; background: transparent; cursor: pointer; height: 24px; }
@@ -114,12 +116,13 @@
             </div>
         </div>
 
+        <!-- Guidance text moved OUTSIDE controls-layer so it isn't blurred or blocked -->
+        <div id="guidanceContainer" class="text-center min-h-[1.5rem] flex items-center justify-center mb-8 relative z-40">
+            <span id="guidanceLabel" class="text-[11px] font-extrabold uppercase tracking-[0.2em] opacity-60">Focus on your high-value tasks.</span>
+        </div>
+
         <div class="relative w-full flex flex-col items-center">
             <div class="controls-layer flex flex-col items-center gap-8 z-10 w-full">
-                <div id="guidanceContainer" class="text-center min-h-[1.5rem] flex items-center justify-center">
-                    <span id="guidanceLabel" class="text-[11px] font-extrabold uppercase tracking-[0.2em] opacity-60">Focus on your high-value tasks.</span>
-                </div>
-
                 <div class="flex items-center gap-8">
                     <button id="resetBtn" class="text-[10px] font-bold uppercase tracking-widest opacity-30 hover:opacity-100 transition-opacity p-2">Reset</button>
                     <button id="startBtn" class="h-16 px-10 rounded-full bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 font-bold text-sm uppercase tracking-widest shadow-xl hover:scale-105 active:scale-95 transition-all">Start Session</button>
@@ -146,7 +149,7 @@
     </main>
 
     <footer class="absolute bottom-6 left-6 z-40">
-        <span id="versionLabel" class="text-[10px] font-extrabold uppercase tracking-[0.2em] opacity-40 transition-opacity">v.2026.1.10</span>
+        <span id="versionLabel" class="text-[10px] font-extrabold uppercase tracking-[0.2em] opacity-40 transition-opacity">v.2026.1.11</span>
     </footer>
 
     <!-- Modals -->
@@ -212,11 +215,17 @@
 
     <div id="statsModal" class="fixed inset-0 hidden flex items-center justify-center p-4 modal-backdrop opacity-0 transition-opacity duration-300">
         <div class="bg-surface-light dark:bg-surface-dark w-full max-w-md max-h-[90vh] rounded-[32px] shadow-2xl border border-zinc-200 dark:border-zinc-800 flex flex-col transform scale-95 transition-transform duration-300">
-            <div class="flex justify-between items-start p-8 pb-4">
+            <div class="flex justify-between items-start p-8 pb-2">
                 <h3 class="text-xl font-bold tracking-tight leading-tight">Weekly<br>Analytics</h3>
-                <div class="text-right">
-                    <span id="totalHours" class="text-3xl font-extrabold text-accent tracking-tighter">0.0</span>
-                    <p class="text-[10px] font-bold uppercase tracking-widest opacity-40">Focus Hours</p>
+                <div class="flex gap-6">
+                    <div class="text-right">
+                        <span id="todayHours" class="text-2xl font-extrabold text-zinc-400 tracking-tighter">0.0</span>
+                        <p class="text-[8px] font-bold uppercase tracking-widest opacity-40">Today</p>
+                    </div>
+                    <div class="text-right">
+                        <span id="totalHours" class="text-2xl font-extrabold text-accent tracking-tighter">0.0</span>
+                        <p class="text-[8px] font-bold uppercase tracking-widest opacity-40">Weekly</p>
+                    </div>
                 </div>
             </div>
             <div class="flex-1 overflow-y-auto px-8 py-4 no-scrollbar">
@@ -281,7 +290,6 @@
             
             document.getElementById('statusLabel').textContent = state.isWork ? 'Deep Work' : 'Recovery';
             
-            // Critical: Updating guidance text based on mode
             const guidance = document.getElementById('guidanceLabel');
             guidance.textContent = state.isWork ? 'Focus on your high-value tasks.' : 'Step away from the screen for a moment.';
             
@@ -356,10 +364,6 @@
             state.timeLeft = state.isWork ? state.workTime : state.breakTime;
             state.totalTime = state.timeLeft;
             
-            // Explicitly force text update
-            const guidance = document.getElementById('guidanceLabel');
-            guidance.textContent = state.isWork ? 'Focus on your high-value tasks.' : 'Step away from the screen for a moment.';
-            
             if (!state.isWork) {
                 lockControls();
                 if (autoStart) {
@@ -412,22 +416,24 @@
             const days = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
             const curr = new Date();
             let totalSessions = 0;
+            let todaySessions = 0;
+            const todayDateStr = curr.toISOString().split('T')[0];
             
-            // Calculate sessions over last 7 days
             for(let i=6; i>=0; i--) {
                 const d = new Date(); d.setDate(curr.getDate() - i);
                 const dateStr = d.toISOString().split('T')[0];
                 const count = state.stats[dateStr] || 0;
                 totalSessions += count;
+                if(dateStr === todayDateStr) todaySessions = count;
+
                 const height = Math.min((count / state.dailyGoal) * 100, 100);
                 container.innerHTML += `<div class="flex-1 flex flex-col justify-end h-full"><div class="bar w-full ${count >= state.dailyGoal ? 'bg-accent' : 'bg-zinc-200 dark:bg-zinc-700'}" style="height: ${height || 2}%"></div></div>`;
                 labels.innerHTML += `<div class="flex-1 text-center text-[10px] font-bold opacity-30">${days[d.getDay()]}</div>`;
             }
             
-            // Convert sessions to focus hours
             const hoursPerSession = state.workTime / 3600;
-            const totalHoursValue = (totalSessions * hoursPerSession).toFixed(1);
-            document.getElementById('totalHours').textContent = totalHoursValue;
+            document.getElementById('totalHours').textContent = (totalSessions * hoursPerSession).toFixed(1);
+            document.getElementById('todayHours').textContent = (todaySessions * hoursPerSession).toFixed(1);
             
             const isMonday = curr.getDay() === 1;
             const weekID = `${curr.getFullYear()}-W${getWeekNumber(curr)}`;
