@@ -2,144 +2,568 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Focus | Studio Pro</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Manond Type Timer</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;500;800&display=swap" rel="stylesheet">
-    <style>
-        :root { --accent: #FF5C00; --bg-color: #F9F9F9; }
-        body { 
-            font-family: 'Manrope', sans-serif; 
-            background-color: var(--bg-color);
-            transition: background-color 2s ease, color 0.5s ease; 
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Manrope', 'sans-serif'] },
+                    colors: {
+                        accent: '#FF5C00',
+                        success: '#10B981',
+                        danger: '#EF4444',
+                        surface: { light: '#FFFFFF', dark: '#18181B' },
+                        bg: { light: '#F4F4F5', dark: '#09090B' }
+                    }
+                }
+            }
         }
-        .dark { --bg-color: #0A0A0A; color: #F2F2F2 !important; }
-        .timer-circle { transform: rotate(-90deg); }
+    </script>
+    <style>
+        body { transition: background-color 0.5s ease, color 0.3s ease; -webkit-tap-highlight-color: transparent; }
+        .timer-svg { transform: rotate(-90deg); }
         .progress-ring { transition: stroke-dashoffset 1s linear, stroke 0.5s ease; stroke-linecap: round; }
+        .bar { transition: height 1s cubic-bezier(0.4, 0, 0.2, 1); min-height: 2px; border-radius: 4px 4px 0 0; }
+        .modal-backdrop { background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); z-index: 50; }
+        .dark .modal-backdrop { background: rgba(0, 0, 0, 0.4); }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
         
-        /* Volume Slider */
-        input[type=range] { -webkit-appearance: none; background: transparent; cursor: pointer; width: 70px; }
-        input[type=range]::-webkit-slider-runnable-track { background: rgba(155, 155, 155, 0.2); height: 3px; border-radius: 2px; }
-        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 10px; width: 10px; border-radius: 50%; background: var(--accent); margin-top: -3.5px; }
+        .soft-lockdown .controls-layer { 
+            opacity: 0.15; 
+            filter: blur(8px); 
+            pointer-events: none;
+            transition: 0.5s ease; 
+        }
 
-        #statsModal, #settingsModal { backdrop-filter: blur(20px); display: none; z-index: 100; }
-        .session-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); opacity: 0.15; }
-        .session-dot.completed { opacity: 1; box-shadow: 0 0 8px var(--accent); }
+        .unlocked-temp .controls-layer {
+            opacity: 1;
+            filter: blur(0);
+            pointer-events: auto;
+        }
+
+        #unlockSliderContainer {
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s;
+        }
+
+        input[type=range] { -webkit-appearance: none; background: transparent; cursor: pointer; height: 24px; }
+        input[type=range]::-webkit-slider-runnable-track { background: rgba(150, 150, 150, 0.2); height: 4px; border-radius: 2px; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 16px; width: 16px; border-radius: 50%; background: #FF5C00; margin-top: -6px; }
+
+        .unlock-track {
+            background: rgba(150, 150, 150, 0.1);
+            border: 1px solid rgba(150, 150, 150, 0.2);
+        }
+        .dark .unlock-track {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .switch { position: relative; display: inline-block; width: 34px; height: 20px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: #FF5C00; }
+        input:checked + .slider:before { transform: translateX(14px); }
     </style>
 </head>
-<body class="h-screen flex flex-col items-center justify-center overflow-hidden">
+<body class="bg-bg-light dark:bg-bg-dark text-zinc-900 dark:text-zinc-100 h-screen flex flex-col overflow-hidden selection:bg-accent selection:text-white">
 
-    <div class="absolute top-8 right-8 flex gap-6 z-50 items-center">
-        <div class="flex items-center gap-3 bg-white/40 dark:bg-white/5 p-2 px-4 rounded-full border border-gray-100 dark:border-gray-800">
-            <button id="ambientToggle" class="hover:scale-110 transition-all">
-                <svg id="soundOffIcon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path></svg>
-                <svg id="soundOnIcon" class="hidden w-4 h-4 text-orange-500" fill="currentColor" viewBox="0 0 24 24"><path d="M13.5 4.06c-.22-.13-.48-.13-.7 0L6.47 8.38H3c-.55 0-1 .45-1 1v5.24c0 .55.45 1 1 1h3.47l6.33 4.32c.1.07.22.1.34.1.1 0 .2-.02.3-.07.23-.1.38-.34.38-.59V4.65c0-.25-.15-.49-.38-.59zM18.16 12l2.64-2.64c.2-.2.2-.51 0-.71-.2-.2-.51-.2-.71 0L17.45 11.3l-2.64-2.64c-.2-.2-.51-.2-.71 0-.2.2-.2.51 0 .71l2.64 2.64-2.64 2.64c-.2.2-.2.51 0 .71.1.1.23.15.35.15.12 0 .25-.05.35-.15l2.64-2.64 2.64 2.64c.1.1.23.15.35.15.12 0 .25-.05.35-.15.2-.2.2-.51 0-.71L18.16 12z"/></svg>
-            </button>
-            <input type="range" id="volumeSlider" min="0" max="0.5" step="0.01" value="0.2">
-        </div>
-        <button id="statsBtn" class="p-3 opacity-40 hover:opacity-100 transition-all"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg></button>
-    </div>
-
-    <div id="appContainer" class="flex flex-col items-center">
-        <div class="relative flex items-center justify-center">
-            <svg class="timer-circle w-72 h-72 md:w-80 md:h-80">
-                <circle cx="50%" cy="50%" r="45%" stroke="currentColor" stroke-width="1" fill="transparent" class="opacity-10"></circle>
-                <circle id="progress" cx="50%" cy="50%" r="45%" stroke="var(--accent)" stroke-width="6" fill="transparent" stroke-dasharray="1131" stroke-dashoffset="0" class="progress-ring"></circle>
-            </svg>
-            <div class="absolute text-center">
-                <h1 id="timeDisplay" class="text-7xl font-extrabold tracking-tighter tabular-nums">50:00</h1>
-                <p id="statusLabel" class="text-[9px] uppercase tracking-[0.5em] font-black opacity-30 mt-3">Ready</p>
+    <header class="absolute top-0 left-0 w-full p-6 flex justify-between items-start z-40">
+        <div class="flex flex-col">
+            <h1 class="font-extrabold tracking-tight text-xl leading-[0.9]">
+                Manond Type<br>
+                <span class="text-accent">Timer</span>
+            </h1>
+            <div class="flex items-center gap-2 mt-4">
+                <button id="ambientToggle" class="group flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider opacity-50 hover:opacity-100 transition-opacity">
+                    <span class="w-1.5 h-1.5 rounded-full bg-zinc-400 group-[.active]:bg-green-500 transition-colors" id="ambientIndicator"></span>
+                    <span id="ambientLabel">Focus Audio</span>
+                </button>
             </div>
         </div>
-        <div class="mt-12 flex flex-col items-center">
-            <button id="startBtn" class="bg-[#1A1A1A] text-white dark:bg-white dark:text-black px-16 py-6 rounded-full font-black text-xs tracking-widest uppercase hover:shadow-2xl active:scale-95 transition-all">Start Session</button>
-            <div id="sessionDots" class="mt-12 flex gap-4"></div>
+
+        <div class="flex gap-2">
+            <button id="statsBtn" class="p-3 rounded-2xl bg-white dark:bg-zinc-800 shadow-sm border border-zinc-200 dark:border-zinc-700 hover:scale-105 active:scale-95 transition-all">
+                <svg class="w-5 h-5 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+            </button>
+            <button id="settingsBtn" class="p-3 rounded-2xl bg-white dark:bg-zinc-800 shadow-sm border border-zinc-200 dark:border-zinc-700 hover:scale-105 active:scale-95 transition-all">
+                <svg class="w-5 h-5 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+            </button>
+        </div>
+    </header>
+
+    <main id="appContainer" class="flex-1 flex flex-col items-center justify-center w-full max-w-2xl mx-auto px-6 relative">
+        <div class="relative w-full max-w-[300px] aspect-square flex items-center justify-center mb-12">
+            <svg class="timer-svg w-full h-full" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="45" stroke="currentColor" stroke-width="1.5" fill="none" class="opacity-10"></circle>
+                <circle id="progress" cx="50" cy="50" r="45" stroke="currentColor" stroke-width="4.5" fill="none" class="text-accent progress-ring" stroke-dasharray="283" stroke-dashoffset="0"></circle>
+            </svg>
+            <div class="absolute inset-0 flex flex-col items-center justify-center text-center">
+                <h2 id="timeDisplay" class="text-7xl font-bold tracking-tighter tabular-nums">50:00</h2>
+                <div class="flex flex-col items-center gap-1 mt-4">
+                    <span id="statusLabel" class="text-[10px] font-bold uppercase tracking-[0.4em] opacity-40">Deep Work</span>
+                    <span id="guidanceLabel" class="text-[9px] font-semibold opacity-60">Focus on your high-value tasks.</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="relative w-full flex flex-col items-center">
+            <div class="controls-layer flex flex-col items-center gap-12 z-10 w-full">
+                <div class="flex items-center gap-8">
+                    <button id="resetBtn" class="text-[10px] font-bold uppercase tracking-widest opacity-30 hover:opacity-100 transition-opacity p-2">Reset</button>
+                    <button id="startBtn" class="h-16 px-10 rounded-full bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 font-bold text-sm uppercase tracking-widest shadow-xl hover:scale-105 active:scale-95 transition-all">Start Session</button>
+                    <button id="switchBtn" class="text-[10px] font-bold uppercase tracking-widest opacity-30 hover:opacity-100 transition-opacity p-2">Skip</button>
+                </div>
+                <div id="sessionDots" class="flex gap-3 h-2 items-center"></div>
+            </div>
+
+            <div id="unlockSliderContainer" class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-0 translate-y-4">
+                <div class="unlock-track w-64 h-14 rounded-full flex items-center px-1 pointer-events-auto relative overflow-hidden">
+                    <div id="unlockBg" class="absolute left-0 top-0 bottom-0 bg-accent/10 w-0 transition-none"></div>
+                    <div id="unlockThumb" class="w-12 h-12 rounded-full bg-white dark:bg-zinc-800 shadow-lg flex items-center justify-center cursor-grab active:cursor-grabbing z-20 relative transition-transform duration-75">
+                        <svg class="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                        </svg>
+                    </div>
+                    <div class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-30">
+                        <span class="text-[9px] font-bold uppercase tracking-[0.2em] ml-6">Slide to Unlock</span>
+                        <svg class="w-3 h-3 ml-2 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path></svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="absolute bottom-6 left-6 z-40">
+        <span id="versionLabel" class="text-[8px] font-bold uppercase tracking-[0.2em] opacity-20 transition-opacity">2026.1.05</span>
+    </footer>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="fixed inset-0 hidden flex items-center justify-center p-4 modal-backdrop opacity-0 transition-opacity duration-300">
+        <div class="bg-surface-light dark:bg-surface-dark w-full max-w-sm rounded-[32px] shadow-2xl border border-zinc-200 dark:border-zinc-800 p-8 transform scale-95 transition-transform duration-300">
+            <div class="flex justify-between items-center mb-8">
+                <h3 class="text-xl font-bold tracking-tight">Settings</h3>
+                <button class="close-modal opacity-40 hover:opacity-100"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
+            </div>
+
+            <div class="space-y-6 overflow-y-auto max-h-[50vh] no-scrollbar pr-2">
+                <div class="space-y-2">
+                    <label class="text-[10px] font-bold uppercase tracking-widest opacity-50">Theme</label>
+                    <div class="grid grid-cols-3 gap-2 bg-zinc-100 dark:bg-zinc-800 p-1 rounded-xl">
+                        <button class="theme-opt py-2 rounded-lg text-[10px] font-bold transition-all" data-theme="light">Light</button>
+                        <button class="theme-opt py-2 rounded-lg text-[10px] font-bold transition-all" data-theme="dark">Dark</button>
+                        <button class="theme-opt py-2 rounded-lg text-[10px] font-bold transition-all" data-theme="system">Auto</button>
+                    </div>
+                </div>
+
+                <div class="space-y-2">
+                    <label class="text-[10px] font-bold uppercase tracking-widest opacity-50">Durations (Min) & Goal</label>
+                    <div class="grid grid-cols-3 gap-3">
+                        <div class="bg-zinc-50 dark:bg-zinc-900 p-3 rounded-2xl border border-zinc-200 dark:border-zinc-700">
+                            <span class="text-[8px] opacity-60 font-bold uppercase">Work</span>
+                            <input type="number" id="workInput" class="bg-transparent font-bold text-lg outline-none w-full">
+                        </div>
+                        <div class="bg-zinc-50 dark:bg-zinc-900 p-3 rounded-2xl border border-zinc-200 dark:border-zinc-700">
+                            <span class="text-[8px] opacity-60 font-bold uppercase">Break</span>
+                            <input type="number" id="breakInput" class="bg-transparent font-bold text-lg outline-none w-full">
+                        </div>
+                        <div class="bg-zinc-50 dark:bg-zinc-900 p-3 rounded-2xl border border-zinc-200 dark:border-zinc-700">
+                            <span class="text-[8px] opacity-60 font-bold uppercase">Goal</span>
+                            <input type="number" id="goalInput" class="bg-transparent font-bold text-lg outline-none w-full">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-2">
+                    <div class="flex justify-between"><label class="text-[10px] font-bold uppercase tracking-widest opacity-50">Sound Lab</label><span id="volPercent" class="text-[10px] font-bold opacity-50">50%</span></div>
+                    <div class="bg-zinc-50 dark:bg-zinc-900 p-4 rounded-2xl border border-zinc-200 dark:border-zinc-700 space-y-4">
+                        <input type="range" id="volumeSlider" min="0" max="1" step="0.05" class="w-full">
+                        <button id="testAlarmBtn" class="w-full py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 text-[10px] font-bold uppercase tracking-widest hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors">Test Bell</button>
+                    </div>
+                </div>
+
+                <div class="space-y-2">
+                    <label class="text-[10px] font-bold uppercase tracking-widest opacity-50">Display</label>
+                    <div class="bg-zinc-50 dark:bg-zinc-900 p-4 rounded-2xl border border-zinc-200 dark:border-zinc-700 flex justify-between items-center">
+                        <span class="text-[10px] font-bold uppercase opacity-70">Show Version Tag</span>
+                        <label class="switch">
+                            <input type="checkbox" id="versionToggle" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="space-y-2 pt-2">
+                    <label class="text-[10px] font-bold uppercase tracking-widest opacity-50 text-danger">Advanced</label>
+                    <button id="factoryResetBtn" class="w-full py-3 rounded-2xl border border-danger/30 text-danger text-[10px] font-bold uppercase tracking-widest hover:bg-danger/5 transition-colors">Clear All Local Data</button>
+                </div>
+            </div>
+
+            <button id="saveSettings" class="w-full mt-8 py-4 rounded-2xl bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 font-bold text-xs uppercase tracking-widest hover:scale-105 active:scale-95 transition-all">Save Changes</button>
         </div>
     </div>
 
-    <audio id="alarmSound" loop src="https://assets.mixkit.co/active_storage/sfx/951/951-preview.mp3"></audio>
+    <!-- Analytics Modal -->
+    <div id="statsModal" class="fixed inset-0 hidden flex items-center justify-center p-4 modal-backdrop opacity-0 transition-opacity duration-300">
+        <div class="bg-surface-light dark:bg-surface-dark w-full max-sm rounded-[32px] shadow-2xl border border-zinc-200 dark:border-zinc-800 p-8 transform scale-95 transition-transform duration-300">
+            <div class="flex justify-between items-start mb-10">
+                <h3 class="text-xl font-bold tracking-tight leading-tight">Weekly<br>Analytics</h3>
+                <div class="text-right">
+                    <span id="totalHours" class="text-3xl font-extrabold text-accent tracking-tighter">0.0</span>
+                    <p class="text-[10px] font-bold uppercase tracking-widest opacity-40">Focus Hours</p>
+                </div>
+            </div>
+            <div class="flex items-end justify-between gap-2 h-32 mb-4" id="graphContainer"></div>
+            <div class="flex justify-between px-1 mb-8" id="graphLabels"></div>
+            
+            <div id="mondayResetContainer" class="hidden mb-6 p-4 bg-accent/10 border border-accent/20 rounded-2xl text-center">
+                <p class="text-[10px] font-bold uppercase tracking-widest text-accent mb-3">New Week Detected</p>
+                <button id="confirmWeeklyReset" class="w-full py-3 rounded-xl bg-accent text-white font-bold text-[10px] uppercase tracking-widest shadow-lg shadow-accent/20">Archive & Reset Stats</button>
+            </div>
+
+            <button class="close-modal w-full py-4 rounded-2xl bg-zinc-100 dark:bg-zinc-800 font-bold text-xs uppercase tracking-widest">Close</button>
+        </div>
+    </div>
+
+    <!-- Confirm Reset Modal -->
+    <div id="confirmModal" class="fixed inset-0 hidden flex items-center justify-center p-4 modal-backdrop opacity-0 transition-opacity duration-300">
+        <div class="bg-surface-light dark:bg-surface-dark w-full max-w-[280px] rounded-[32px] shadow-2xl p-8 text-center transform scale-95 transition-transform duration-300">
+            <h3 class="text-lg font-bold mb-2">Are you sure?</h3>
+            <p class="text-xs opacity-50 mb-8 leading-relaxed">This will permanently delete your settings and session history.</p>
+            <div class="space-y-3">
+                <button id="executeReset" class="w-full py-3 rounded-2xl bg-danger text-white font-bold text-[10px] uppercase tracking-widest">Confirm Reset</button>
+                <button class="close-modal w-full py-3 rounded-2xl bg-zinc-100 dark:bg-zinc-800 font-bold text-[10px] uppercase tracking-widest">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <audio id="alarmSound" src="https://assets.mixkit.co/active_storage/sfx/951/951-preview.mp3" loop></audio>
 
     <script>
-        let workTime = 50 * 60, timeLeft = 50 * 60, totalTime = 50 * 60, timerId = null, isWork = true;
-        let audioCtx, brownNoiseNode, gainNode, ambientPlaying = false;
+        const getSaved = (k, d) => localStorage.getItem(k) || d;
+        const setSaved = (k, v) => localStorage.setItem(k, v);
+
+        const state = {
+            workTime: parseInt(getSaved('workTime', 50)) * 60,
+            breakTime: parseInt(getSaved('breakTime', 10)) * 60,
+            dailyGoal: parseInt(getSaved('dailyGoal', 8)),
+            theme: getSaved('theme', 'system'),
+            stats: JSON.parse(getSaved('studioStats', '{}')),
+            volume: parseFloat(getSaved('volume', 0.5)),
+            showVersion: getSaved('showVersion', 'true') === 'true',
+            lastResetPrompt: getSaved('lastResetPrompt', ''),
+            timeLeft: 0, totalTime: 0, timerId: null, isWork: true, isAmbientPlaying: false,
+            isAlarmRinging: false
+        };
+        state.timeLeft = state.workTime;
+        state.totalTime = state.workTime;
+
+        let audioCtx, brownNoiseNode, gainNode;
+        let unlockTimer = null;
 
         function updateDisplay() {
-            const m = Math.floor(timeLeft / 60), s = timeLeft % 60;
+            const m = Math.floor(state.timeLeft / 60);
+            const s = state.timeLeft % 60;
             const timeStr = `${m}:${s < 10 ? '0' : ''}${s}`;
             document.getElementById('timeDisplay').textContent = timeStr;
-            document.title = timerId ? `${timeStr} | ${isWork ? 'Focus' : 'Break'}` : 'Studio Timer';
+            document.title = state.timerId ? `${timeStr} • ${state.isWork ? 'Focus' : 'Rest'}` : 'Manond Type Timer';
             
-            // Visual Gradient Flow
-            if (isWork && timeLeft < 300) { // Last 5 minutes
-                const intensity = (300 - timeLeft) / 300;
-                document.body.style.backgroundColor = `rgba(255, 92, 0, ${intensity * 0.1})`;
-            } else if (!isWork) {
-                document.body.style.backgroundColor = 'rgba(0, 230, 118, 0.05)';
-            } else {
-                document.body.style.backgroundColor = '';
-            }
-
             const progress = document.getElementById('progress');
-            const circum = 2 * Math.PI * 144;
-            progress.style.strokeDashoffset = circum - (timeLeft / totalTime) * circum;
+            const offset = 283 - (state.timeLeft / state.totalTime) * 283;
+            progress.style.strokeDashoffset = offset;
+            progress.style.color = state.isWork ? '#FF5C00' : '#10B981';
+            
+            document.getElementById('statusLabel').textContent = state.isWork ? 'Deep Work' : 'Recovery';
+            document.getElementById('guidanceLabel').textContent = state.isWork ? 'Focus on your high-value tasks.' : 'Step away from the screen for a moment.';
+            document.getElementById('versionLabel').style.opacity = state.showVersion ? '0.2' : '0';
         }
 
-        function initAudio() {
-            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            gainNode = audioCtx.createGain();
-            gainNode.gain.value = document.getElementById('volumeSlider').value;
-            const bufferSize = 4096;
-            let lastOut = 0.0;
-            brownNoiseNode = audioCtx.createScriptProcessor(bufferSize, 1, 1);
-            brownNoiseNode.onaudioprocess = (e) => {
-                const output = e.outputBuffer.getChannelData(0);
-                for (let i = 0; i < bufferSize; i++) {
-                    const white = Math.random() * 2 - 1;
-                    output[i] = (lastOut + (0.02 * white)) / 1.02;
-                    lastOut = output[i];
-                    output[i] *= 3.5; 
-                }
-            };
-            brownNoiseNode.connect(gainNode);
-        }
-
-        document.getElementById('ambientToggle').addEventListener('click', () => {
-            if (!audioCtx) initAudio();
-            if (!ambientPlaying) {
-                gainNode.connect(audioCtx.destination);
-                ambientPlaying = true;
-                document.getElementById('soundOffIcon').classList.add('hidden');
-                document.getElementById('soundOnIcon').classList.remove('hidden');
-            } else {
-                gainNode.disconnect();
-                ambientPlaying = false;
-                document.getElementById('soundOffIcon').classList.remove('hidden');
-                document.getElementById('soundOnIcon').classList.add('hidden');
+        function initDots() {
+            const container = document.getElementById('sessionDots');
+            container.innerHTML = '';
+            const today = new Date().toISOString().split('T')[0];
+            const completed = state.stats[today] || 0;
+            for(let i=0; i<state.dailyGoal; i++) {
+                const dot = document.createElement('div');
+                dot.className = `w-1.5 h-1.5 rounded-full transition-all duration-300 ${i < completed ? 'bg-accent scale-125' : 'bg-current opacity-20'}`;
+                container.appendChild(dot);
             }
+        }
+
+        function triggerAlarm() {
+            clearInterval(state.timerId);
+            state.timerId = null;
+            state.isAlarmRinging = true;
+
+            const alarm = document.getElementById('alarmSound');
+            alarm.volume = state.volume;
+            alarm.currentTime = 0;
+            alarm.loop = state.isWork; 
+            alarm.play().catch(e => console.log("Playback blocked"));
+
+            if (state.isAmbientPlaying) toggleBrownNoise();
+
+            const startBtn = document.getElementById('startBtn');
+            startBtn.textContent = 'Stop Alarm';
+            startBtn.className = "h-16 px-10 rounded-full bg-red-500 text-white font-bold text-sm uppercase tracking-widest shadow-xl animate-pulse transition-all";
+            
+            document.body.classList.add('unlocked-temp');
+            
+            if (Notification.permission === "granted") new Notification(state.isWork ? "Focus Complete" : "Break Over");
+
+            if (state.isWork) {
+                const today = new Date().toISOString().split('T')[0];
+                state.stats[today] = (state.stats[today] || 0) + 1;
+                setSaved('studioStats', JSON.stringify(state.stats));
+                initDots();
+            } else {
+                state.isWork = true;
+                state.timeLeft = state.workTime;
+                state.totalTime = state.timeLeft;
+                document.body.classList.remove('soft-lockdown', 'unlocked-temp');
+                hideUnlockSlider();
+                updateDisplay();
+                alarm.onended = () => { if (!alarm.loop && state.isAlarmRinging) stopAlarmAndProceed(); };
+            }
+        }
+
+        function stopAlarmAndProceed() {
+            const alarm = document.getElementById('alarmSound');
+            alarm.pause(); alarm.currentTime = 0; alarm.onended = null;
+            state.isAlarmRinging = false;
+            
+            const startBtn = document.getElementById('startBtn');
+            startBtn.classList.remove('bg-red-500', 'animate-pulse');
+            startBtn.className = "h-16 px-10 rounded-full bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 font-bold text-sm uppercase tracking-widest shadow-xl hover:scale-105 active:scale-95 transition-all";
+            startBtn.textContent = 'Start Session';
+
+            if (!document.body.classList.contains('soft-lockdown') && state.isWork) {
+                switchMode();
+            } else {
+                updateDisplay();
+            }
+        }
+
+        function switchMode() {
+            state.isWork = !state.isWork;
+            state.timeLeft = state.isWork ? state.workTime : state.breakTime;
+            state.totalTime = state.timeLeft;
+            document.getElementById('startBtn').textContent = 'Start Session';
+            if (!state.isWork) lockControls();
+            else { document.body.classList.remove('soft-lockdown', 'unlocked-temp'); hideUnlockSlider(); }
+            updateDisplay();
+        }
+
+        function lockControls() {
+            document.body.classList.add('soft-lockdown');
+            document.body.classList.remove('unlocked-temp');
+            showUnlockSlider();
+        }
+
+        function showUnlockSlider() {
+            const s = document.getElementById('unlockSliderContainer');
+            s.classList.remove('hidden', 'opacity-0', 'translate-y-4');
+            s.classList.add('opacity-100', 'translate-y-0');
+        }
+
+        function hideUnlockSlider() {
+            const s = document.getElementById('unlockSliderContainer');
+            s.classList.add('opacity-0', 'translate-y-4');
+            setTimeout(() => s.classList.add('hidden'), 400);
+        }
+
+        function renderStats() {
+            const container = document.getElementById('graphContainer');
+            const labels = document.getElementById('graphLabels');
+            container.innerHTML = ''; labels.innerHTML = '';
+            const days = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+            const curr = new Date();
+            let totalSess = 0;
+            
+            for(let i=6; i>=0; i--) {
+                const d = new Date(); d.setDate(curr.getDate() - i);
+                const dateStr = d.toISOString().split('T')[0];
+                const count = state.stats[dateStr] || 0;
+                totalSess += count;
+                const height = Math.min((count / state.dailyGoal) * 100, 100);
+                container.innerHTML += `<div class="flex-1 flex flex-col justify-end h-full"><div class="bar w-full ${count >= state.dailyGoal ? 'bg-accent' : 'bg-zinc-200 dark:bg-zinc-700'}" style="height: ${height || 2}%"></div></div>`;
+                labels.innerHTML += `<div class="flex-1 text-center text-[10px] font-bold opacity-30">${days[d.getDay()]}</div>`;
+            }
+            document.getElementById('totalHours').textContent = ((totalSess * state.workTime) / 3600).toFixed(1);
+
+            // Check if it's Monday and we haven't prompted yet
+            const isMonday = curr.getDay() === 1;
+            const weekID = `${curr.getFullYear()}-W${getWeekNumber(curr)}`;
+            if (isMonday && state.lastResetPrompt !== weekID) {
+                document.getElementById('mondayResetContainer').classList.remove('hidden');
+            } else {
+                document.getElementById('mondayResetContainer').classList.add('hidden');
+            }
+        }
+
+        function getWeekNumber(d) {
+            d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+            d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7));
+            var yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
+            return Math.ceil((((d - yearStart) / 86400000) + 1)/7);
+        }
+
+        function toggleBrownNoise() {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            if (!audioCtx) { audioCtx = new AudioContext(); gainNode = audioCtx.createGain(); gainNode.gain.value = state.volume; gainNode.connect(audioCtx.destination); }
+            if (!state.isAmbientPlaying) {
+                brownNoiseNode = audioCtx.createScriptProcessor(4096, 1, 1);
+                brownNoiseNode.onaudioprocess = (e) => {
+                    const o = e.outputBuffer.getChannelData(0); let l = 0.0;
+                    for (let i = 0; i < 4096; i++) { const w = Math.random() * 2 - 1; o[i] = (l + (0.02 * w)) / 1.02; l = o[i]; o[i] *= 3.5; }
+                };
+                brownNoiseNode.connect(gainNode);
+                state.isAmbientPlaying = true;
+                document.getElementById('ambientToggle').classList.add('active');
+            } else {
+                if (brownNoiseNode) brownNoiseNode.disconnect();
+                state.isAmbientPlaying = false;
+                document.getElementById('ambientToggle').classList.remove('active');
+            }
+        }
+
+        function setTheme(mode) {
+            setSaved('theme', mode);
+            document.documentElement.classList.remove('dark');
+            document.querySelectorAll('.theme-opt').forEach(b => {
+                b.classList.remove('bg-white', 'dark:bg-zinc-700', 'shadow-sm');
+                if(b.dataset.theme === mode) b.classList.add('bg-white', 'dark:bg-zinc-700', 'shadow-sm');
+            });
+            if (mode === 'dark' || (mode === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.classList.add('dark');
+        }
+
+        function openModal(id) {
+            const m = document.getElementById(id); m.classList.remove('hidden');
+            setTimeout(() => { m.classList.remove('opacity-0'); m.children[0].classList.remove('scale-95'); }, 10);
+        }
+        function closeModal(id) {
+            const m = document.getElementById(id); m.classList.add('opacity-0'); m.children[0].classList.add('scale-95');
+            setTimeout(() => m.classList.add('hidden'), 300);
+        }
+
+        // Logic for Factory Reset
+        document.getElementById('factoryResetBtn').addEventListener('click', () => openModal('confirmModal'));
+        document.getElementById('executeReset').addEventListener('click', () => {
+            localStorage.clear();
+            window.location.reload();
         });
 
-        document.getElementById('volumeSlider').addEventListener('input', (e) => {
-            if (gainNode) gainNode.gain.value = e.target.value;
+        // Logic for Monday Reset
+        document.getElementById('confirmWeeklyReset').addEventListener('click', () => {
+            state.stats = {};
+            setSaved('studioStats', '{}');
+            const curr = new Date();
+            const weekID = `${curr.getFullYear()}-W${getWeekNumber(curr)}`;
+            state.lastResetPrompt = weekID;
+            setSaved('lastResetPrompt', weekID);
+            renderStats();
+            initDots();
+            document.getElementById('mondayResetContainer').classList.add('hidden');
         });
+
+        const thumb = document.getElementById('unlockThumb');
+        const bg = document.getElementById('unlockBg');
+        let isDragging = false, startX = 0; const maxSlide = 200;
+
+        thumb.addEventListener('mousedown', e => { isDragging = true; startX = e.clientX; thumb.style.transition = 'none'; });
+        window.addEventListener('mousemove', e => {
+            if (!isDragging) return;
+            let d = Math.max(0, Math.min(e.clientX - startX, maxSlide));
+            thumb.style.transform = `translateX(${d}px)`;
+            bg.style.width = `${(d / maxSlide) * 100}%`;
+            if (d >= maxSlide) { onUnlock(); isDragging = false; }
+        });
+        window.addEventListener('mouseup', () => { 
+            if (!isDragging) return; isDragging = false;
+            thumb.style.transition = 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+            thumb.style.transform = `translateX(0px)`; bg.style.width = '0%';
+        });
+
+        // Touch support
+        thumb.addEventListener('touchstart', e => { isDragging = true; startX = e.touches[0].clientX; thumb.style.transition = 'none'; });
+        window.addEventListener('touchmove', e => {
+            if (!isDragging) return;
+            let d = Math.max(0, Math.min(e.touches[0].clientX - startX, maxSlide));
+            thumb.style.transform = `translateX(${d}px)`;
+            bg.style.width = `${(d / maxSlide) * 100}%`;
+            if (d >= maxSlide) { onUnlock(); isDragging = false; }
+        });
+        window.addEventListener('touchend', () => { 
+            if (!isDragging) return; isDragging = false;
+            thumb.style.transition = 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+            thumb.style.transform = `translateX(0px)`; bg.style.width = '0%';
+        });
+
+        function onUnlock() {
+            document.body.classList.add('unlocked-temp'); hideUnlockSlider();
+            if (unlockTimer) clearTimeout(unlockTimer);
+            unlockTimer = setTimeout(() => {
+                if (document.body.classList.contains('soft-lockdown') && !state.isAlarmRinging) {
+                    document.body.classList.remove('unlocked-temp'); showUnlockSlider();
+                }
+            }, 5000);
+        }
 
         document.getElementById('startBtn').addEventListener('click', () => {
-            if (timerId) { 
-                clearInterval(timerId); timerId = null; 
-                document.getElementById('startBtn').textContent = 'Resume';
-            } else {
+            if (state.isAlarmRinging) stopAlarmAndProceed();
+            else if (state.timerId) { clearInterval(state.timerId); state.timerId = null; document.getElementById('startBtn').textContent = 'Resume'; }
+            else {
+                state.timerId = setInterval(() => { state.timeLeft--; updateDisplay(); if (state.timeLeft <= 0) triggerAlarm(); }, 1000);
                 document.getElementById('startBtn').textContent = 'Pause';
-                timerId = setInterval(() => {
-                    timeLeft--; updateDisplay();
-                    if (timeLeft <= 0) { 
-                        clearInterval(timerId); 
-                        document.getElementById('alarmSound').play();
-                        document.getElementById('startBtn').textContent = 'Stop Alarm';
-                    }
-                }, 1000);
             }
         });
 
-        updateDisplay();
+        document.getElementById('resetBtn').addEventListener('click', () => {
+            const alarm = document.getElementById('alarmSound'); alarm.pause(); alarm.currentTime = 0; state.isAlarmRinging = false;
+            clearInterval(state.timerId); state.timerId = null;
+            state.timeLeft = state.isWork ? state.workTime : state.breakTime; state.totalTime = state.timeLeft;
+            const b = document.getElementById('startBtn'); b.textContent = 'Start Session';
+            b.className = "h-16 px-10 rounded-full bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 font-bold text-sm uppercase tracking-widest shadow-xl hover:scale-105 active:scale-95 transition-all";
+            if(!state.isWork) lockControls(); updateDisplay();
+        });
+
+        document.getElementById('switchBtn').addEventListener('click', switchMode);
+        document.getElementById('ambientToggle').addEventListener('click', toggleBrownNoise);
+        document.getElementById('settingsBtn').addEventListener('click', () => {
+            document.getElementById('workInput').value = state.workTime / 60;
+            document.getElementById('breakInput').value = state.breakTime / 60;
+            document.getElementById('goalInput').value = state.dailyGoal;
+            document.getElementById('versionToggle').checked = state.showVersion;
+            openModal('settingsModal');
+        });
+        document.getElementById('statsBtn').addEventListener('click', () => { renderStats(); openModal('statsModal'); });
+        document.getElementById('saveSettings').addEventListener('click', () => {
+            state.workTime = document.getElementById('workInput').value * 60;
+            state.breakTime = document.getElementById('breakInput').value * 60;
+            state.dailyGoal = parseInt(document.getElementById('goalInput').value) || 8;
+            state.showVersion = document.getElementById('versionToggle').checked;
+            setSaved('workTime', document.getElementById('workInput').value);
+            setSaved('breakTime', document.getElementById('breakInput').value);
+            setSaved('dailyGoal', state.dailyGoal);
+            setSaved('showVersion', state.showVersion);
+            if (!state.timerId) { state.timeLeft = state.isWork ? state.workTime : state.breakTime; state.totalTime = state.timeLeft; updateDisplay(); }
+            initDots(); closeModal('settingsModal');
+        });
+        document.querySelectorAll('.close-modal').forEach(b => b.addEventListener('click', e => closeModal(e.target.closest('[id$="Modal"]').id)));
+        document.querySelectorAll('.theme-opt').forEach(b => b.addEventListener('click', () => setTheme(b.dataset.theme)));
+        document.getElementById('volumeSlider').addEventListener('input', e => {
+            state.volume = e.target.value; setSaved('volume', state.volume);
+            document.getElementById('volPercent').textContent = Math.round(state.volume * 100) + '%';
+            if (gainNode) gainNode.gain.value = state.volume;
+        });
+        document.getElementById('testAlarmBtn').addEventListener('click', () => {
+            const a = document.getElementById('alarmSound'); a.volume = state.volume; a.currentTime = 0; a.play(); setTimeout(() => a.pause(), 1500);
+        });
+
+        setTheme(state.theme); updateDisplay(); initDots();
     </script>
 </body>
 </html>
