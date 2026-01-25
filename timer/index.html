@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Manond Type Timer</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&family=Noto+Sans+Thai:wght@400;600;700&display=swap" rel="stylesheet">
@@ -30,9 +30,9 @@
             transition: background-color 0.5s ease, color 0.3s ease; 
             -webkit-tap-highlight-color: transparent;
             font-family: 'Manrope', 'Noto Sans Thai', sans-serif;
+            padding-top: env(safe-area-inset-top);
         }
         
-        /* Adjusting Thai font visual weight to match English */
         [lang="th"] {
             font-size: 1.05em; 
             line-height: 1.6;
@@ -72,13 +72,14 @@
 </head>
 <body class="bg-bg-light dark:bg-bg-dark text-zinc-900 dark:text-zinc-100 h-screen flex flex-col overflow-hidden selection:bg-accent selection:text-white">
 
-    <header class="absolute top-0 left-0 w-full p-6 flex justify-between items-start z-40">
+    <!-- Header with increased padding for mobile comfort -->
+    <header class="absolute top-0 left-0 w-full p-8 md:p-10 flex justify-between items-start z-40">
         <div class="flex flex-col">
             <h1 class="font-extrabold tracking-tight text-xl leading-[0.9]">
                 <span id="brandNameMain">Manond Type</span><br>
                 <span class="text-accent" id="brandNameSub">Timer</span>
             </h1>
-            <div class="flex items-center gap-3 mt-4">
+            <div class="flex items-center gap-3 mt-5">
                 <button id="ambientToggle" class="group flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider opacity-50 hover:opacity-100 transition-opacity">
                     <span class="w-1.5 h-1.5 rounded-full bg-zinc-400 group-[.active]:bg-green-500 transition-colors" id="ambientIndicator"></span>
                     <span id="ambientLabel">Focus Audio</span>
@@ -90,10 +91,10 @@
         </div>
 
         <div class="flex gap-2">
-            <button id="statsBtn" class="p-3 rounded-2xl bg-white dark:bg-zinc-800 shadow-sm border border-zinc-200 dark:border-zinc-700 hover:scale-105 active:scale-95 transition-all">
+            <button id="statsBtn" class="p-3.5 rounded-2xl bg-white dark:bg-zinc-800 shadow-sm border border-zinc-200 dark:border-zinc-700 hover:scale-105 active:scale-95 transition-all">
                 <svg class="w-5 h-5 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 00-2 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
             </button>
-            <button id="settingsBtn" class="p-3 rounded-2xl bg-white dark:bg-zinc-800 shadow-sm border border-zinc-200 dark:border-zinc-700 hover:scale-105 active:scale-95 transition-all flex items-center justify-center">
+            <button id="settingsBtn" class="p-3.5 rounded-2xl bg-white dark:bg-zinc-800 shadow-sm border border-zinc-200 dark:border-zinc-700 hover:scale-105 active:scale-95 transition-all flex items-center justify-center">
                 <svg class="w-5 h-5 text-zinc-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <circle cx="12" cy="12" r="3"></circle>
                     <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
@@ -102,7 +103,7 @@
         </div>
     </header>
 
-    <main id="appContainer" class="flex-1 flex flex-col items-center justify-center w-full max-w-2xl mx-auto px-6 relative">
+    <main id="appContainer" class="flex-1 flex flex-col items-center justify-center w-full max-w-2xl mx-auto px-6 relative mt-16">
         <div class="relative w-full max-w-[320px] aspect-square flex items-center justify-center mb-12">
             <svg class="timer-svg w-full h-full" viewBox="0 0 100 100">
                 <circle cx="50" cy="50" r="45" stroke="currentColor" stroke-width="1.5" fill="none" class="opacity-10"></circle>
@@ -392,6 +393,13 @@
 
         let audioCtx, brownNoiseNode, gainNode, unlockTimer = null;
 
+        /**
+         * Simple markdown helper to convert **text** to <strong>text</strong>
+         */
+        function parseMarkdown(text) {
+            return text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        }
+
         function updateTexts() {
             const t = translations[state.lang];
             document.documentElement.lang = state.lang;
@@ -460,11 +468,11 @@
             document.getElementById('aiTitle').innerText = t.aiProtocolTitle;
             document.getElementById('aiContent').innerText = t.aiLoading;
             
-            const prompt = `I am currently starting a ${state.workTime / 60} minute deep work session. My daily goal is ${state.dailyGoal} sessions. Suggest a short 3-point protocol for maximum focus.`;
+            const prompt = `I am currently starting a ${state.workTime / 60} minute deep work session. My daily goal is ${state.dailyGoal} sessions. Suggest a short 3-point protocol for maximum focus. Use **text** for important parts.`;
             const systemPrompt = `You are a productivity expert. Respond ONLY in ${state.lang === 'th' ? 'Thai' : 'English'}. Keep it concise and professional.`;
             
             const result = await callGemini(prompt, systemPrompt);
-            document.getElementById('aiContent').innerText = result;
+            document.getElementById('aiContent').innerHTML = parseMarkdown(result);
         }
 
         async function generatePerformanceReview() {
@@ -482,11 +490,11 @@
             document.getElementById('aiContent').innerText = t.aiLoadingInsights;
             
             const history = Object.entries(state.stats).slice(-7).map(([date, count]) => `${date}: ${count} sessions`).join(', ');
-            const prompt = `Weekly history: ${history || 'No data yet'}. Goal: ${state.dailyGoal} sessions per day. Analyze trends and give a motivation boost.`;
+            const prompt = `Weekly history: ${history || 'No data yet'}. Goal: ${state.dailyGoal} sessions per day. Analyze trends and give a motivation boost. Use **text** for bold highlights.`;
             const systemPrompt = `You are a performance psychologist. Respond ONLY in ${state.lang === 'th' ? 'Thai' : 'English'}. Provide a brief 2-3 sentence analysis.`;
             
             const result = await callGemini(prompt, systemPrompt);
-            document.getElementById('aiContent').innerText = result;
+            document.getElementById('aiContent').innerHTML = parseMarkdown(result);
         }
 
         function updateDisplay() {
