@@ -31,6 +31,13 @@
             -webkit-tap-highlight-color: transparent;
             font-family: 'Manrope', 'Noto Sans Thai', sans-serif;
         }
+        
+        /* Adjusting Thai font visual weight to match English */
+        [lang="th"] {
+            font-size: 1.05em; 
+            line-height: 1.6;
+        }
+        
         .timer-svg { transform: rotate(-90deg); }
         .progress-ring { transition: stroke-dashoffset 1s linear, stroke 0.5s ease; stroke-linecap: round; }
         .bar { transition: height 1s cubic-bezier(0.4, 0, 0.2, 1); min-height: 2px; border-radius: 4px 4px 0 0; }
@@ -61,8 +68,6 @@
             50% { background-position: 100% 50%; }
             100% { background-position: 0% 50%; }
         }
-
-        [lang="th"] { font-family: 'Manrope', 'Noto Sans Thai', sans-serif; }
     </style>
 </head>
 <body class="bg-bg-light dark:bg-bg-dark text-zinc-900 dark:text-zinc-100 h-screen flex flex-col overflow-hidden selection:bg-accent selection:text-white">
@@ -106,7 +111,6 @@
             <div class="absolute inset-0 flex flex-col items-center justify-center text-center">
                 <h2 id="timeDisplay" class="text-7xl font-bold tracking-tighter tabular-nums">50:00</h2>
                 <div class="flex flex-col items-center gap-1 mt-4">
-                    <!-- Session labels now strictly English -->
                     <span id="statusLabel" class="text-[10px] font-bold uppercase tracking-[0.4em] opacity-40">Deep Work</span>
                 </div>
             </div>
@@ -143,10 +147,10 @@
     </main>
 
     <footer class="absolute bottom-6 left-6 z-40">
-        <span id="versionLabel" class="text-[10px] font-extrabold uppercase tracking-[0.2em] opacity-40 transition-opacity">v.2026.1.25.c</span>
+        <span id="versionLabel" class="text-[10px] font-extrabold uppercase tracking-[0.2em] opacity-40 transition-opacity">v.2026.1.25.d</span>
     </footer>
 
-    <!-- Gemini AI Response Modal - Higher Z-index to avoid overlap -->
+    <!-- Gemini AI Response Modal -->
     <div id="aiModal" class="fixed inset-0 hidden flex items-center justify-center p-4 modal-backdrop opacity-0 transition-opacity duration-300 z-[60]">
         <div class="bg-surface-light dark:bg-surface-dark w-full max-w-md rounded-[32px] shadow-2xl border border-zinc-200 dark:border-zinc-800 flex flex-col transform scale-95 transition-transform duration-300 overflow-hidden">
             <div class="flex justify-between items-center p-8 pb-4">
@@ -235,7 +239,7 @@
         </div>
     </div>
 
-    <!-- Analytics Modal - Optimized for Desktop -->
+    <!-- Analytics Modal -->
     <div id="statsModal" class="fixed inset-0 hidden flex items-center justify-center p-4 modal-backdrop opacity-0 transition-opacity duration-300 z-50">
         <div class="bg-surface-light dark:bg-surface-dark w-full max-w-2xl rounded-[32px] shadow-2xl border border-zinc-200 dark:border-zinc-800 flex flex-col transform scale-95 transition-transform duration-300">
             <div class="flex justify-between items-start p-10 pb-4">
@@ -472,7 +476,6 @@
                 return; 
             }
             
-            // Close stats modal first to avoid overlap
             closeModal('statsModal');
             openModal('aiModal'); 
             document.getElementById('aiTitle').innerText = t.aiInsightsTitle;
@@ -495,7 +498,6 @@
             progress.style.strokeDashoffset = 283 - (state.timeLeft / state.totalTime) * 283;
             progress.style.color = state.isWork ? '#FF5C00' : '#10B981';
             
-            // Labels are now hardcoded English as requested
             document.getElementById('statusLabel').textContent = state.isWork ? "Deep Work" : "Recovery";
             document.getElementById('guidanceLabel').textContent = state.isWork ? t.workGuidance : t.breakGuidance;
             
