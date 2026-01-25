@@ -10,14 +10,17 @@
         :root {
             --bg-light: #F9F9F9;
             --text-light: #1A1A1A;
-            --bg-dark: #121212;
-            --text-dark: #F2F2F2;
-            --accent: #FF5C00; /* Signature Accent */
+            --accent: #FF5C00; /* Manon-inspired Orange */
         }
 
         body {
             font-family: 'Manrope', sans-serif;
-            transition: background-color 0.4s ease, color 0.4s ease;
+            transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1), color 0.4s ease;
+        }
+
+        .dark {
+            background-color: #121212 !important;
+            color: #F2F2F2 !important;
         }
 
         .timer-circle {
@@ -25,20 +28,29 @@
         }
 
         .progress-ring {
-            transition: stroke-dashoffset 0.3s linear;
+            transition: stroke-dashoffset 0.3s linear, stroke 0.4s ease;
             stroke-linecap: round;
         }
 
-        /* Glassmorphism toggle */
         .toggle-btn {
             backdrop-filter: blur(10px);
             background: rgba(155, 155, 155, 0.1);
+        }
+
+        /* Pulse animation for the alarm state */
+        @keyframes alarm-pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); box-shadow: 0 0 20px rgba(239, 68, 68, 0.5); }
+            100% { transform: scale(1); }
+        }
+        .animate-alarm {
+            animation: alarm-pulse 0.6s infinite;
         }
     </style>
 </head>
 <body class="bg-[#F9F9F9] text-[#1A1A1A] h-screen flex flex-col items-center justify-center overflow-hidden">
 
-    <div class="absolute top-8 right-8">
+    <div class="absolute top-8 right-8 flex items-center gap-4">
         <button id="themeToggle" class="toggle-btn p-3 rounded-full border border-gray-200 dark:border-gray-800 transition-all hover:scale-110">
             <svg id="sunIcon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z"></path></svg>
             <svg id="moonIcon" class="hidden w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
@@ -47,29 +59,33 @@
 
     <div class="relative flex flex-col items-center">
         <div class="relative flex items-center justify-center">
-            <svg class="timer-circle w-80 h-80 md:w-96 md:h-96">
-                <circle cx="50%" cy="50%" r="45%" stroke="currentColor" stroke-width="4" fill="transparent" class="opacity-10"></circle>
-                <circle id="progress" cx="50%" cy="50%" r="45%" stroke="var(--accent)" stroke-width="8" fill="transparent" stroke-dasharray="1131" stroke-dashoffset="0" class="progress-ring"></circle>
+            <svg class="timer-circle w-72 h-72 md:w-96 md:h-96">
+                <circle cx="50%" cy="50%" r="45%" stroke="currentColor" stroke-width="2" fill="transparent" class="opacity-10"></circle>
+                <circle id="progress" cx="50%" cy="50%" r="45%" stroke="var(--accent)" stroke-width="6" fill="transparent" stroke-dasharray="1131" stroke-dashoffset="0" class="progress-ring"></circle>
             </svg>
 
             <div class="absolute text-center">
-                <h1 id="timeDisplay" class="text-7xl md:text-8xl font-extrabold tracking-tighter">50:00</h1>
-                <p id="statusLabel" class="text-sm uppercase tracking-[0.3em] font-medium opacity-60 mt-2">Work Session</p>
+                <h1 id="timeDisplay" class="text-7xl md:text-8xl font-extrabold tracking-tighter tabular-nums">50:00</h1>
+                <p id="statusLabel" class="text-xs uppercase tracking-[0.4em] font-bold opacity-50 mt-4">Work Session</p>
             </div>
         </div>
 
-        <div class="mt-12 flex gap-8 items-center">
-            <button id="resetBtn" class="opacity-40 hover:opacity-100 transition-opacity uppercase text-xs tracking-widest font-bold">Reset</button>
-            <button id="startBtn" class="bg-[#1A1A1A] text-white dark:bg-white dark:text-black px-10 py-4 rounded-full font-bold text-lg hover:scale-105 transition-transform">Start</button>
-            <button id="switchBtn" class="opacity-40 hover:opacity-100 transition-opacity uppercase text-xs tracking-widest font-bold">Skip</button>
+        <div class="mt-16 flex gap-10 items-center">
+            <button id="resetBtn" class="opacity-30 hover:opacity-100 transition-opacity uppercase text-[10px] tracking-widest font-black">Reset</button>
+            <button id="startBtn" class="bg-[#1A1A1A] text-white dark:bg-white dark:text-black px-12 py-5 rounded-full font-extrabold text-sm tracking-widest uppercase hover:shadow-xl transition-all active:scale-95">Start</button>
+            <button id="switchBtn" class="opacity-30 hover:opacity-100 transition-opacity uppercase text-[10px] tracking-widest font-black">Skip</button>
         </div>
     </div>
 
-    <audio id="alarmSound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
+    <audio id="alarmSound" loop src="https://assets.mixkit.co/active_storage/sfx/951/951-preview.mp3"></audio>
+
+    <button id="testAudio" class="absolute bottom-8 text-[10px] opacity-20 hover:opacity-100 tracking-tighter uppercase font-bold">Test Alarm Sound</button>
 
     <script>
-        let timeLeft = 50 * 60;
-        let totalTime = 50 * 60;
+        let workTime = 50 * 60;
+        let breakTime = 10 * 60;
+        let timeLeft = workTime;
+        let totalTime = workTime;
         let isWorkSession = true;
         let timerId = null;
 
@@ -81,23 +97,29 @@
         const progressCircle = document.getElementById('progress');
         const alarmSound = document.getElementById('alarmSound');
         const themeToggle = document.getElementById('themeToggle');
+        const testAudio = document.getElementById('testAudio');
 
-        // Circular Math
-        const radius = progressCircle.r.baseVal.value;
-        const circumference = 2 * Math.PI * (45 * 320 / 100); // Approximation based on 45% radius
+        // Circular Logic
+        const circumference = 2 * Math.PI * (window.innerWidth < 768 ? 129.6 : 172.8); // Responsive calc
 
         function updateDisplay() {
             const minutes = Math.floor(timeLeft / 60);
             const seconds = timeLeft % 60;
             timeDisplay.textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
             
-            // Update Circle
+            // Progress Ring
             const offset = circumference - (timeLeft / totalTime) * circumference;
             progressCircle.style.strokeDasharray = `${circumference}`;
             progressCircle.style.strokeDashoffset = offset;
         }
 
         function toggleTimer() {
+            // Stop alarm if it's currently ringing
+            if (!alarmSound.paused) {
+                stopAlarm();
+                return;
+            }
+
             if (timerId) {
                 clearInterval(timerId);
                 timerId = null;
@@ -108,46 +130,73 @@
                     timeLeft--;
                     updateDisplay();
                     if (timeLeft <= 0) {
-                        clearInterval(timerId);
-                        alarmSound.play();
-                        switchMode();
+                        triggerAlarm();
                     }
                 }, 1000);
             }
         }
 
+        function triggerAlarm() {
+            clearInterval(timerId);
+            timerId = null;
+            alarmSound.play();
+            startBtn.textContent = 'Stop Alarm';
+            startBtn.classList.add('bg-red-600', 'text-white', 'animate-alarm');
+            document.title = "⏰ TIME UP!";
+        }
+
+        function stopAlarm() {
+            alarmSound.pause();
+            alarmSound.currentTime = 0;
+            startBtn.classList.remove('bg-red-600', 'text-white', 'animate-alarm');
+            document.title = "Focus | 50:10 Timer";
+            switchMode();
+        }
+
         function switchMode() {
             isWorkSession = !isWorkSession;
-            timeLeft = isWorkSession ? 50 * 60 : 10 * 60;
+            timeLeft = isWorkSession ? workTime : breakTime;
             totalTime = timeLeft;
             statusLabel.textContent = isWorkSession ? 'Work Session' : 'Micro Break';
             document.documentElement.style.setProperty('--accent', isWorkSession ? '#FF5C00' : '#00E676');
             updateDisplay();
-            startBtn.textContent = 'Start';
+            startBtn.textContent = 'Start ' + (isWorkSession ? 'Work' : 'Break');
             timerId = null;
         }
 
         function resetTimer() {
+            alarmSound.pause();
+            alarmSound.currentTime = 0;
             clearInterval(timerId);
             timerId = null;
-            timeLeft = isWorkSession ? 50 * 60 : 10 * 60;
+            timeLeft = isWorkSession ? workTime : breakTime;
+            startBtn.classList.remove('bg-red-600', 'text-white', 'animate-alarm');
             updateDisplay();
             startBtn.textContent = 'Start';
         }
 
         // Theme Toggle Logic
         themeToggle.addEventListener('click', () => {
-            const isDark = document.body.classList.toggle('bg-[#121212]');
-            document.body.classList.toggle('text-[#F2F2F2]');
             document.body.classList.toggle('dark');
             document.getElementById('sunIcon').classList.toggle('hidden');
             document.getElementById('moonIcon').classList.toggle('hidden');
         });
 
+        // Test Audio Functionality
+        testAudio.addEventListener('mousedown', () => alarmSound.play());
+        testAudio.addEventListener('mouseup', () => {
+            alarmSound.pause();
+            alarmSound.currentTime = 0;
+        });
+
         startBtn.addEventListener('click', toggleTimer);
         resetBtn.addEventListener('click', resetTimer);
-        switchBtn.addEventListener('click', switchMode);
+        switchBtn.addEventListener('click', () => {
+            alarmSound.pause();
+            switchMode();
+        });
 
+        // Initialize display
         updateDisplay();
     </script>
 </body>
