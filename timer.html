@@ -318,13 +318,16 @@
             const alarm = document.getElementById('alarmSound');
             alarm.pause(); alarm.currentTime = 0;
             document.getElementById('startBtn').classList.remove('bg-red-500', 'text-white', 'animate-pulse');
+            
             if (state.isWork) {
+                // Focus session ended
                 const today = new Date().toISOString().split('T')[0];
                 state.stats[today] = (state.stats[today] || 0) + 1;
                 setSaved('studioStats', JSON.stringify(state.stats));
                 initDots();
                 openModal('healthModal');
             } else {
+                // Break session ended
                 switchMode();
             }
         }
