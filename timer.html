@@ -32,11 +32,13 @@
         .dark .modal-backdrop { background: rgba(0, 0, 0, 0.4); }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         
+        /* Smooth transitions for UI states */
+        .controls-layer { transition: opacity 0.4s ease, filter 0.4s ease; }
+
         .soft-lockdown .controls-layer { 
             opacity: 0.15; 
             filter: blur(8px); 
             pointer-events: none;
-            transition: 0.5s ease; 
         }
 
         .unlocked-temp .controls-layer {
@@ -46,7 +48,7 @@
         }
 
         #unlockSliderContainer {
-            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s;
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease;
         }
 
         input[type=range] { -webkit-appearance: none; background: transparent; cursor: pointer; height: 24px; }
@@ -115,8 +117,8 @@
 
         <div class="relative w-full flex flex-col items-center">
             <div class="controls-layer flex flex-col items-center gap-8 z-10 w-full">
-                <!-- Guidance label moved here -->
-                <div id="guidanceContainer" class="text-center h-4 flex items-center justify-center">
+                <!-- Guidance label: Center point of visual flow -->
+                <div id="guidanceContainer" class="text-center min-h-[1.5rem] flex items-center justify-center">
                     <span id="guidanceLabel" class="text-[11px] font-extrabold uppercase tracking-[0.2em] opacity-60">Focus on your high-value tasks.</span>
                 </div>
 
@@ -274,7 +276,11 @@
             progress.style.color = state.isWork ? '#FF5C00' : '#10B981';
             
             document.getElementById('statusLabel').textContent = state.isWork ? 'Deep Work' : 'Recovery';
-            document.getElementById('guidanceLabel').textContent = state.isWork ? 'Focus on your high-value tasks.' : 'Step away from the screen for a moment.';
+            
+            // Fixed guidance label assignment
+            const guidance = document.getElementById('guidanceLabel');
+            guidance.textContent = state.isWork ? 'Focus on your high-value tasks.' : 'Step away from the screen for a moment.';
+            
             document.getElementById('versionLabel').style.opacity = state.showVersion ? '0.4' : '0';
         }
 
@@ -299,15 +305,15 @@
             alarm.volume = state.volume;
             alarm.currentTime = 0;
             
-            // Loop only for Deep Work (requires manual stop)
-            // Single play for Recovery (auto switch back to Work)
+            // Loop for Deep Work (Manual stop)
+            // Single chime for Recovery (Auto stop)
             alarm.loop = state.isWork; 
             alarm.play().catch(e => console.log("Playback blocked"));
 
             if (state.isAmbientPlaying) toggleBrownNoise();
 
             if (state.isWork) {
-                // Manual Stop mode for Deep Work
+                // Focus complete -> Alarm loops until "Stop Alarm" clicked
                 const startBtn = document.getElementById('startBtn');
                 startBtn.textContent = 'Stop Alarm';
                 startBtn.className = "h-16 px-10 rounded-full bg-red-500 text-white font-bold text-sm uppercase tracking-widest shadow-xl animate-pulse transition-all";
@@ -319,7 +325,7 @@
                 
                 document.body.classList.add('unlocked-temp');
             } else {
-                // Auto switch back to Work after chime for Recovery
+                // Break over -> Single chime, then auto-reset to Work (paused)
                 alarm.onended = () => {
                     if (state.isAlarmRinging) {
                         stopAlarmAndProceed();
@@ -340,10 +346,10 @@
             startBtn.className = "h-16 px-10 rounded-full bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 font-bold text-sm uppercase tracking-widest shadow-xl hover:scale-105 active:scale-95 transition-all";
             
             if (state.isWork) {
-                // Finished Work -> Switch to Recovery and AUTO START
+                // Work session just ended -> Switch to Recovery (Locked)
                 switchMode(true); 
             } else {
-                // Finished Recovery -> Switch to Work and WAIT (MANUAL START)
+                // Recovery session just ended -> Switch back to Work (Unlocked)
                 switchMode(false); 
             }
         }
@@ -354,13 +360,14 @@
             state.totalTime = state.timeLeft;
             
             if (!state.isWork) {
-                // Entering Recovery
+                // ENTERING RECOVERY: Blur UI and show slider
                 lockControls();
                 if (autoStart) {
-                    setTimeout(() => startTimer(), 1000);
+                    // Small delay for smooth visual transition
+                    setTimeout(() => startTimer(), 600);
                 }
             } else {
-                // Entering Deep Work
+                // ENTERING FOCUS: Cleanly restore UI
                 document.body.classList.remove('soft-lockdown', 'unlocked-temp');
                 hideUnlockSlider();
                 document.getElementById('startBtn').textContent = 'Start Session';
@@ -388,11 +395,15 @@
         function showUnlockSlider() {
             const s = document.getElementById('unlockSliderContainer');
             s.classList.remove('hidden', 'opacity-0', 'translate-y-4');
-            s.classList.add('opacity-100', 'translate-y-0');
+            // Timeout to allow browser to register display removal before animating
+            setTimeout(() => {
+                s.classList.add('opacity-100', 'translate-y-0');
+            }, 50);
         }
 
         function hideUnlockSlider() {
             const s = document.getElementById('unlockSliderContainer');
+            s.classList.remove('opacity-100', 'translate-y-0');
             s.classList.add('opacity-0', 'translate-y-4');
             setTimeout(() => s.classList.add('hidden'), 400);
         }
@@ -528,7 +539,7 @@
             if(!state.isWork) lockControls(); updateDisplay();
         });
 
-        document.getElementById('switchBtn').addEventListener('click', () => switchMode(false));
+        document.getElementById('switchBtn').addEventListener('click', () => stopAlarmAndProceed());
         document.getElementById('ambientToggle').addEventListener('click', toggleBrownNoise);
         document.getElementById('settingsBtn').addEventListener('click', () => {
             document.getElementById('workInput').value = state.workTime / 60;
