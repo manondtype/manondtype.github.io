@@ -32,7 +32,6 @@
         .dark .modal-backdrop { background: rgba(0, 0, 0, 0.4); }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         
-        /* Smooth transitions for UI states */
         .controls-layer { transition: opacity 0.4s ease, filter 0.4s ease; }
 
         .soft-lockdown .controls-layer { 
@@ -117,7 +116,6 @@
 
         <div class="relative w-full flex flex-col items-center">
             <div class="controls-layer flex flex-col items-center gap-8 z-10 w-full">
-                <!-- Guidance label: Center point of visual flow -->
                 <div id="guidanceContainer" class="text-center min-h-[1.5rem] flex items-center justify-center">
                     <span id="guidanceLabel" class="text-[11px] font-extrabold uppercase tracking-[0.2em] opacity-60">Focus on your high-value tasks.</span>
                 </div>
@@ -148,12 +146,12 @@
     </main>
 
     <footer class="absolute bottom-6 left-6 z-40">
-        <span id="versionLabel" class="text-[10px] font-extrabold uppercase tracking-[0.2em] opacity-40 transition-opacity">v.2026.1.07</span>
+        <span id="versionLabel" class="text-[10px] font-extrabold uppercase tracking-[0.2em] opacity-40 transition-opacity">v.2026.1.08</span>
     </footer>
 
     <!-- Modals -->
     <div id="settingsModal" class="fixed inset-0 hidden flex items-center justify-center p-4 modal-backdrop opacity-0 transition-opacity duration-300">
-        <div class="bg-surface-light dark:bg-surface-dark w-full max-w-sm rounded-[32px] shadow-2xl border border-zinc-200 dark:border-zinc-800 p-8 transform scale-95 transition-transform duration-300">
+        <div class="bg-surface-light dark:bg-surface-dark w-full max-sm rounded-[32px] shadow-2xl border border-zinc-200 dark:border-zinc-800 p-8 transform scale-95 transition-transform duration-300">
             <div class="flex justify-between items-center mb-8">
                 <h3 class="text-xl font-bold tracking-tight">Settings</h3>
                 <button class="close-modal opacity-40 hover:opacity-100"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
@@ -277,7 +275,6 @@
             
             document.getElementById('statusLabel').textContent = state.isWork ? 'Deep Work' : 'Recovery';
             
-            // Fixed guidance label assignment
             const guidance = document.getElementById('guidanceLabel');
             guidance.textContent = state.isWork ? 'Focus on your high-value tasks.' : 'Step away from the screen for a moment.';
             
@@ -304,16 +301,12 @@
             const alarm = document.getElementById('alarmSound');
             alarm.volume = state.volume;
             alarm.currentTime = 0;
-            
-            // Loop for Deep Work (Manual stop)
-            // Single chime for Recovery (Auto stop)
             alarm.loop = state.isWork; 
             alarm.play().catch(e => console.log("Playback blocked"));
 
             if (state.isAmbientPlaying) toggleBrownNoise();
 
             if (state.isWork) {
-                // Focus complete -> Alarm loops until "Stop Alarm" clicked
                 const startBtn = document.getElementById('startBtn');
                 startBtn.textContent = 'Stop Alarm';
                 startBtn.className = "h-16 px-10 rounded-full bg-red-500 text-white font-bold text-sm uppercase tracking-widest shadow-xl animate-pulse transition-all";
@@ -325,7 +318,6 @@
                 
                 document.body.classList.add('unlocked-temp');
             } else {
-                // Break over -> Single chime, then auto-reset to Work (paused)
                 alarm.onended = () => {
                     if (state.isAlarmRinging) {
                         stopAlarmAndProceed();
@@ -346,10 +338,8 @@
             startBtn.className = "h-16 px-10 rounded-full bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 font-bold text-sm uppercase tracking-widest shadow-xl hover:scale-105 active:scale-95 transition-all";
             
             if (state.isWork) {
-                // Work session just ended -> Switch to Recovery (Locked)
                 switchMode(true); 
             } else {
-                // Recovery session just ended -> Switch back to Work (Unlocked)
                 switchMode(false); 
             }
         }
@@ -360,14 +350,11 @@
             state.totalTime = state.timeLeft;
             
             if (!state.isWork) {
-                // ENTERING RECOVERY: Blur UI and show slider
                 lockControls();
                 if (autoStart) {
-                    // Small delay for smooth visual transition
                     setTimeout(() => startTimer(), 600);
                 }
             } else {
-                // ENTERING FOCUS: Cleanly restore UI
                 document.body.classList.remove('soft-lockdown', 'unlocked-temp');
                 hideUnlockSlider();
                 document.getElementById('startBtn').textContent = 'Start Session';
@@ -395,7 +382,6 @@
         function showUnlockSlider() {
             const s = document.getElementById('unlockSliderContainer');
             s.classList.remove('hidden', 'opacity-0', 'translate-y-4');
-            // Timeout to allow browser to register display removal before animating
             setTimeout(() => {
                 s.classList.add('opacity-100', 'translate-y-0');
             }, 50);
@@ -414,17 +400,23 @@
             container.innerHTML = ''; labels.innerHTML = '';
             const days = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
             const curr = new Date();
-            let totalSess = 0;
+            let totalSessions = 0;
+            
+            // Re-calculate based on current state history
             for(let i=6; i>=0; i--) {
                 const d = new Date(); d.setDate(curr.getDate() - i);
                 const dateStr = d.toISOString().split('T')[0];
                 const count = state.stats[dateStr] || 0;
-                totalSess += count;
+                totalSessions += count;
                 const height = Math.min((count / state.dailyGoal) * 100, 100);
                 container.innerHTML += `<div class="flex-1 flex flex-col justify-end h-full"><div class="bar w-full ${count >= state.dailyGoal ? 'bg-accent' : 'bg-zinc-200 dark:bg-zinc-700'}" style="height: ${height || 2}%"></div></div>`;
                 labels.innerHTML += `<div class="flex-1 text-center text-[10px] font-bold opacity-30">${days[d.getDay()]}</div>`;
             }
-            document.getElementById('totalHours').textContent = ((totalSess * state.workTime) / 3600).toFixed(1);
+            
+            // Precision fix for total hours calculation
+            const hoursPerSession = state.workTime / 3600;
+            document.getElementById('totalHours').textContent = (totalSessions * hoursPerSession).toFixed(1);
+            
             const isMonday = curr.getDay() === 1;
             const weekID = `${curr.getFullYear()}-W${getWeekNumber(curr)}`;
             if (isMonday && state.lastResetPrompt !== weekID) document.getElementById('mondayResetContainer').classList.remove('hidden');
