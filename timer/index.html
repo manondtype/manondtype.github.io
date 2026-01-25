@@ -200,7 +200,7 @@
                     </div>
                     <div class="bg-zinc-50 dark:bg-zinc-900 p-4 rounded-2xl border border-zinc-200 dark:border-zinc-700 space-y-2">
                         <input type="password" id="apiKeyInput" placeholder="Paste Gemini API Key here" class="bg-transparent font-bold text-xs outline-none w-full placeholder:opacity-30">
-                        <p id="apiKeyNote" class="text-[8px] opacity-40 leading-tight">Key is stored locally. Ensure API is active in Google AI Studio.</p>
+                        <p id="apiKeyNote" class="text-[8px] opacity-40 leading-tight">Key is stored locally. Supports automatic fallback between models.</p>
                     </div>
                 </div>
 
@@ -323,7 +323,7 @@
                 language: 'Language',
                 aiConfig: 'AI Configuration',
                 getApiKey: 'Get Free Key →',
-                apiKeyNote: 'Key is stored locally. If error persists, check key activity.',
+                apiKeyNote: 'Key is stored locally. Supports automatic fallback between models.',
                 durationGoal: 'Durations (Min) & Goal',
                 work: 'Work',
                 break: 'Break',
@@ -366,7 +366,7 @@
                 language: 'ภาษา',
                 aiConfig: 'ตั้งค่า AI',
                 getApiKey: 'รับ API Key ฟรี →',
-                apiKeyNote: 'คีย์เก็บในเครื่อง หากยังเกิดข้อผิดพลาด โปรดเช็คการตั้งค่าคีย์',
+                apiKeyNote: 'คีย์เก็บในเครื่อง ระบบจะสลับโมเดลให้อัตโนมัติหากเกิดข้อผิดพลาด',
                 durationGoal: 'ระยะเวลา (นาที) และเป้าหมาย',
                 work: 'ทำงาน',
                 break: 'พัก',
@@ -451,45 +451,50 @@
             const apiKey = state.userApiKey;
             if (!apiKey) return state.lang === 'th' ? "กรุณาใส่ API KEY ในเมนูการตั้งค่า" : "API KEY MISSING: Please go to Settings.";
 
-            // Use the specific supported model for this environment
-            const model = "gemini-2.5-flash-preview-09-2025";
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+            // Priority and Backup Models
+            const models = [
+                "gemini-2.5-flash-preview-09-2025",
+                "gemini-2.5-flash-lite-preview-09-2025"
+            ];
             
-            const payload = {
-                contents: [{ parts: [{ text: prompt }] }],
-                systemInstruction: { parts: [{ text: systemPrompt }] }
-            };
-
             let lastError = "";
             const retryDelays = [1000, 2000, 4000, 8000, 16000];
 
-            for (let i = 0; i <= retryDelays.length; i++) {
-                try {
-                    const response = await fetch(url, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
+            for (const model of models) {
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+                const payload = {
+                    contents: [{ parts: [{ text: prompt }] }],
+                    systemInstruction: { parts: [{ text: systemPrompt }] }
+                };
 
-                    const data = await response.json();
+                for (let i = 0; i <= retryDelays.length; i++) {
+                    try {
+                        const response = await fetch(url, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
 
-                    if (data.candidates?.[0]?.content?.parts?.[0]?.text) {
-                        return data.candidates[0].content.parts[0].text;
+                        const data = await response.json();
+
+                        if (data.candidates?.[0]?.content?.parts?.[0]?.text) {
+                            return data.candidates[0].content.parts[0].text;
+                        }
+
+                        if (data.error) {
+                            lastError = data.error.message;
+                            // If it's 404 (model not found), break early to try the next model
+                            if (response.status === 404) break;
+                            // Don't retry if it's a permanent error (4xx besides 429)
+                            if (response.status >= 400 && response.status < 500 && response.status !== 429) break;
+                        }
+                    } catch (err) {
+                        lastError = err.message;
                     }
 
-                    if (data.error) {
-                        lastError = data.error.message;
-                        // Don't retry if it's a key issue or model not found (4xx)
-                        if (response.status >= 400 && response.status < 500) break;
-                    } else {
-                        lastError = "Invalid response format";
+                    if (i < retryDelays.length) {
+                        await new Promise(res => setTimeout(res, retryDelays[i]));
                     }
-                } catch (err) {
-                    lastError = err.message;
-                }
-
-                if (i < retryDelays.length) {
-                    await new Promise(res => setTimeout(res, retryDelays[i]));
                 }
             }
 
