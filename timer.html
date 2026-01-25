@@ -90,22 +90,30 @@
                 <svg class="w-5 h-5 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
             </button>
             <button id="settingsBtn" class="p-3 rounded-2xl bg-white dark:bg-zinc-800 shadow-sm border border-zinc-200 dark:border-zinc-700 hover:scale-105 active:scale-95 transition-all">
-                <svg class="w-5 h-5 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                <svg class="w-5 h-5 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                    <circle cx="12" cy="12" r="3" stroke-width="2"></circle>
+                </svg>
             </button>
         </div>
     </header>
 
     <main id="appContainer" class="flex-1 flex flex-col items-center justify-center w-full max-w-2xl mx-auto px-6 relative">
-        <div class="relative w-full max-w-[300px] aspect-square flex items-center justify-center mb-12">
+        <div class="relative w-full max-w-[320px] aspect-square flex items-center justify-center mb-12">
+            <!-- Encouragement Text at Top -->
+            <div class="absolute top-[-40px] left-0 w-full text-center pointer-events-none">
+                <span id="guidanceLabel" class="text-[11px] font-extrabold uppercase tracking-[0.2em] opacity-60">Focus on your high-value tasks.</span>
+            </div>
+
             <svg class="timer-svg w-full h-full" viewBox="0 0 100 100">
                 <circle cx="50" cy="50" r="45" stroke="currentColor" stroke-width="1.5" fill="none" class="opacity-10"></circle>
                 <circle id="progress" cx="50" cy="50" r="45" stroke="currentColor" stroke-width="4.5" fill="none" class="text-accent progress-ring" stroke-dasharray="283" stroke-dashoffset="0"></circle>
             </svg>
+            
             <div class="absolute inset-0 flex flex-col items-center justify-center text-center">
                 <h2 id="timeDisplay" class="text-7xl font-bold tracking-tighter tabular-nums">50:00</h2>
                 <div class="flex flex-col items-center gap-1 mt-4">
                     <span id="statusLabel" class="text-[10px] font-bold uppercase tracking-[0.4em] opacity-40">Deep Work</span>
-                    <span id="guidanceLabel" class="text-[9px] font-semibold opacity-60">Focus on your high-value tasks.</span>
                 </div>
             </div>
         </div>
@@ -138,7 +146,7 @@
     </main>
 
     <footer class="absolute bottom-6 left-6 z-40">
-        <span id="versionLabel" class="text-[8px] font-bold uppercase tracking-[0.2em] opacity-20 transition-opacity">2026.1.06</span>
+        <span id="versionLabel" class="text-[10px] font-extrabold uppercase tracking-[0.2em] opacity-40 transition-opacity">v.2026.1.07</span>
     </footer>
 
     <!-- Modals -->
@@ -267,7 +275,7 @@
             
             document.getElementById('statusLabel').textContent = state.isWork ? 'Deep Work' : 'Recovery';
             document.getElementById('guidanceLabel').textContent = state.isWork ? 'Focus on your high-value tasks.' : 'Step away from the screen for a moment.';
-            document.getElementById('versionLabel').style.opacity = state.showVersion ? '0.2' : '0';
+            document.getElementById('versionLabel').style.opacity = state.showVersion ? '0.4' : '0';
         }
 
         function initDots() {
@@ -308,7 +316,6 @@
                 setSaved('studioStats', JSON.stringify(state.stats));
                 initDots();
             } else {
-                // Recovery end: only plays chime once.
                 alarm.onended = () => { if (!alarm.loop && state.isAlarmRinging) stopAlarmAndProceed(); };
             }
         }
@@ -323,11 +330,9 @@
             startBtn.className = "h-16 px-10 rounded-full bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 font-bold text-sm uppercase tracking-widest shadow-xl hover:scale-105 active:scale-95 transition-all";
             
             if (state.isWork) {
-                // WORK COMPLETED -> AUTO START RECOVERY
-                switchMode(true); // Switch to recovery and auto-start
+                switchMode(true); 
             } else {
-                // RECOVERY COMPLETED -> WAIT FOR MANUAL WORK START
-                switchMode(false); // Switch to work and wait
+                switchMode(false); 
             }
         }
 
@@ -337,13 +342,11 @@
             state.totalTime = state.timeLeft;
             
             if (!state.isWork) {
-                // Now in Recovery
                 lockControls();
                 if (autoStart) {
-                    setTimeout(() => startTimer(), 1000); // Small delay for visual transition
+                    setTimeout(() => startTimer(), 1000);
                 }
             } else {
-                // Now in Deep Work
                 document.body.classList.remove('soft-lockdown', 'unlocked-temp');
                 hideUnlockSlider();
                 document.getElementById('startBtn').textContent = 'Start Session';
