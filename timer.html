@@ -136,7 +136,7 @@
 
     <!-- Settings Modal -->
     <div id="settingsModal" class="fixed inset-0 hidden flex items-center justify-center p-4 modal-backdrop opacity-0 transition-opacity duration-300">
-        <div class="bg-surface-light dark:bg-surface-dark w-full max-w-sm rounded-[32px] shadow-2xl border border-zinc-200 dark:border-zinc-800 p-8 transform scale-95 transition-transform duration-300">
+        <div class="bg-surface-light dark:bg-surface-dark w-full max-sm rounded-[32px] shadow-2xl border border-zinc-200 dark:border-zinc-800 p-8 transform scale-95 transition-transform duration-300">
             <div class="flex justify-between items-center mb-8">
                 <h3 class="text-xl font-bold tracking-tight">Settings</h3>
                 <button class="close-modal opacity-40 hover:opacity-100"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
@@ -185,7 +185,7 @@
 
     <!-- Stats Modal -->
     <div id="statsModal" class="fixed inset-0 hidden flex items-center justify-center p-4 modal-backdrop opacity-0 transition-opacity duration-300">
-        <div class="bg-surface-light dark:bg-surface-dark w-full max-w-sm rounded-[32px] shadow-2xl border border-zinc-200 dark:border-zinc-800 p-8 transform scale-95 transition-transform duration-300">
+        <div class="bg-surface-light dark:bg-surface-dark w-full max-sm rounded-[32px] shadow-2xl border border-zinc-200 dark:border-zinc-800 p-8 transform scale-95 transition-transform duration-300">
             <div class="flex justify-between items-start mb-10">
                 <h3 class="text-xl font-bold tracking-tight leading-tight">Weekly<br>Analytics</h3>
                 <div class="text-right">
@@ -201,7 +201,7 @@
 
     <!-- Health Modal -->
     <div id="healthModal" class="fixed inset-0 hidden flex items-center justify-center p-4 modal-backdrop opacity-0 transition-opacity duration-300">
-        <div class="bg-surface-light dark:bg-surface-dark w-full max-w-sm rounded-[32px] shadow-2xl p-8 text-center transform scale-95 transition-transform duration-300">
+        <div class="bg-surface-light dark:bg-surface-dark w-full max-sm rounded-[32px] shadow-2xl p-8 text-center transform scale-95 transition-transform duration-300">
             <div class="w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/20 text-green-600 dark:text-green-400 flex items-center justify-center mx-auto mb-6"><svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg></div>
             <h3 class="text-2xl font-bold mb-2">Block Complete</h3>
             <p class="text-sm opacity-60 mb-8 max-w-[200px] mx-auto leading-relaxed">Step away from the screen for a moment.</p>
@@ -209,7 +209,8 @@
         </div>
     </div>
 
-    <audio id="alarmSound" src="https://assets.mixkit.co/active_storage/sfx/951/951-preview.mp3"></audio>
+    <!-- Alarm Audio -->
+    <audio id="alarmSound" src="https://assets.mixkit.co/active_storage/sfx/951/951-preview.mp3" loop></audio>
 
     <script>
         const getSaved = (k, d) => localStorage.getItem(k) || d;
@@ -222,7 +223,8 @@
             theme: getSaved('theme', 'system'),
             stats: JSON.parse(getSaved('studioStats', '{}')),
             volume: parseFloat(getSaved('volume', 0.5)),
-            timeLeft: 0, totalTime: 0, timerId: null, isWork: true, isAmbientPlaying: false
+            timeLeft: 0, totalTime: 0, timerId: null, isWork: true, isAmbientPlaying: false,
+            isAlarmRinging: false
         };
         state.timeLeft = state.workTime;
         state.totalTime = state.workTime;
@@ -254,10 +256,7 @@
         }
 
         function resetTimer() {
-            const alarm = document.getElementById('alarmSound');
-            alarm.pause();
-            alarm.currentTime = 0;
-            
+            stopAlarmOnly();
             clearInterval(state.timerId);
             state.timerId = null;
             state.timeLeft = state.isWork ? state.workTime : state.breakTime;
@@ -267,17 +266,14 @@
             startBtn.textContent = 'Start Session';
             startBtn.className = "h-16 px-10 rounded-full bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 font-bold text-sm uppercase tracking-widest shadow-xl hover:scale-105 active:scale-95 transition-all";
             
-            // Relock after reset if in recovery
             if(!state.isWork) lockControls();
-            
             updateDisplay();
         }
 
         function toggleTimer() {
             const btn = document.getElementById('startBtn');
-            const alarm = document.getElementById('alarmSound');
-
-            if (!alarm.paused) {
+            
+            if (state.isAlarmRinging) {
                 stopAlarmAndProceed();
                 return;
             }
@@ -300,34 +296,46 @@
         function triggerAlarm() {
             clearInterval(state.timerId);
             state.timerId = null;
+            state.isAlarmRinging = true;
+
             const alarm = document.getElementById('alarmSound');
             alarm.volume = state.volume;
-            alarm.play();
+            alarm.currentTime = 0;
+            alarm.play().catch(e => console.log("Playback blocked"));
+
             if (state.isAmbientPlaying) toggleBrownNoise();
+
             const startBtn = document.getElementById('startBtn');
             startBtn.textContent = 'Stop Alarm';
-            startBtn.classList.add('bg-red-500', 'text-white', 'animate-pulse');
+            startBtn.className = "h-16 px-10 rounded-full bg-red-500 text-white font-bold text-sm uppercase tracking-widest shadow-xl animate-pulse transition-all";
             
-            // Unlock immediately for the alarm
             document.body.classList.add('unlocked-temp');
             
             if (Notification.permission === "granted") new Notification(state.isWork ? "Focus Complete" : "Break Over");
         }
 
-        function stopAlarmAndProceed() {
+        function stopAlarmOnly() {
             const alarm = document.getElementById('alarmSound');
-            alarm.pause(); alarm.currentTime = 0;
-            document.getElementById('startBtn').classList.remove('bg-red-500', 'text-white', 'animate-pulse');
+            alarm.pause();
+            alarm.currentTime = 0;
+            state.isAlarmRinging = false;
+        }
+
+        function stopAlarmAndProceed() {
+            stopAlarmOnly();
+            
+            const startBtn = document.getElementById('startBtn');
+            startBtn.classList.remove('bg-red-500', 'animate-pulse');
+            startBtn.className = "h-16 px-10 rounded-full bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 font-bold text-sm uppercase tracking-widest shadow-xl hover:scale-105 active:scale-95 transition-all";
             
             if (state.isWork) {
-                // Focus session ended
                 const today = new Date().toISOString().split('T')[0];
                 state.stats[today] = (state.stats[today] || 0) + 1;
                 setSaved('studioStats', JSON.stringify(state.stats));
                 initDots();
                 openModal('healthModal');
             } else {
-                // Break session ended
+                // End of break - switch to work mode but WAIT for manual start
                 switchMode();
             }
         }
@@ -336,6 +344,7 @@
             state.isWork = !state.isWork;
             state.timeLeft = state.isWork ? state.workTime : state.breakTime;
             state.totalTime = state.timeLeft;
+            
             document.getElementById('statusLabel').textContent = state.isWork ? 'Deep Work' : 'Recovery';
             document.getElementById('startBtn').textContent = 'Start Session';
             
@@ -438,12 +447,11 @@
             setTimeout(() => m.classList.add('hidden'), 300);
         }
 
-        // Unlock Interaction Logic
         const thumb = document.getElementById('unlockThumb');
         const bg = document.getElementById('unlockBg');
         let isDragging = false;
         let startX = 0;
-        const maxSlide = 200; // Track width minus thumb width
+        const maxSlide = 200;
 
         function handleStart(e) {
             isDragging = true;
@@ -476,11 +484,9 @@
         function onUnlock() {
             document.body.classList.add('unlocked-temp');
             hideUnlockSlider();
-            
-            // Auto-relock after 5 seconds of inactivity
             if (unlockTimer) clearTimeout(unlockTimer);
             unlockTimer = setTimeout(() => {
-                if (!state.isWork) {
+                if (!state.isWork && !state.isAlarmRinging) {
                     document.body.classList.remove('unlocked-temp');
                     showUnlockSlider();
                 }
