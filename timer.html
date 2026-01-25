@@ -3,147 +3,261 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Focus | Manond Type</title>
+    <title>Focus | Studio Ultimate</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;500;800&display=swap" rel="stylesheet">
     <style>
-        :root { --accent: #FF5C00; }
-        body { font-family: 'Manrope', sans-serif; transition: background-color 1s ease; }
-        .dark { background-color: #0A0A0A !important; color: #F2F2F2 !important; }
+        :root { --accent: #FF5C00; --bg-color: #F9F9F9; }
+        body { 
+            font-family: 'Manrope', sans-serif; 
+            background-color: var(--bg-color);
+            transition: background-color 1.5s ease, color 0.5s ease; 
+        }
+        .dark { --bg-color: #0A0A0A; color: #F2F2F2 !important; }
+        
+        /* SVG Timer Logic */
         .timer-circle { transform: rotate(-90deg); }
         .progress-ring { transition: stroke-dashoffset 1s linear, stroke 0.5s ease; stroke-linecap: round; }
         
-        /* Modals */
-        #statsModal, #settingsModal, #healthModal { backdrop-filter: blur(20px); display: none; z-index: 100; }
-        
-        /* Controls */
+        /* Volume Slider */
         input[type=range] { -webkit-appearance: none; background: transparent; cursor: pointer; width: 60px; }
         input[type=range]::-webkit-slider-runnable-track { background: rgba(155, 155, 155, 0.2); height: 3px; border-radius: 2px; }
-        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 10px; width: 10px; border-radius: 50%; background: var(--accent); margin-top: -3.5px; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 10px; width: 10px; border-radius: 50%; background: var(--accent); margin-top: -3.5px; box-shadow: 0 0 5px rgba(0,0,0,0.1); }
         
-        .session-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); opacity: 0.15; }
-        .session-dot.completed { opacity: 1; box-shadow: 0 0 8px var(--accent); }
+        /* Custom UI Elements */
+        .session-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); opacity: 0.15; transition: all 0.3s ease; }
+        .session-dot.completed { opacity: 1; box-shadow: 0 0 8px var(--accent); transform: scale(1.1); }
         
-        .bar-container { display: flex; align-items: flex-end; gap: 8px; height: 100px; }
-        .bar { background: var(--accent); width: 100%; border-radius: 4px; min-height: 2px; transition: height 1s ease; }
+        /* Soft Lockdown (Blur effect during break) */
+        .soft-lockdown .main-btns { opacity: 0.1; filter: blur(2px); transition: 0.5s; }
+        .soft-lockdown .main-btns:hover { opacity: 1; filter: blur(0); }
+
+        /* Modals & Graphs */
+        #statsModal, #settingsModal, #healthModal { backdrop-filter: blur(20px); display: none; z-index: 100; }
+        .bar-container { display: flex; align-items: flex-end; gap: 8px; height: 120px; }
+        .bar { background: var(--accent); width: 100%; border-radius: 4px 4px 1px 1px; min-height: 2px; transition: height 1s cubic-bezier(0.4, 0, 0.2, 1); }
+        
+        /* Ambient Pulse Animation */
+        .ambient-active { animation: ambient-pulse 8s infinite alternate; }
+        @keyframes ambient-pulse { from { background-color: #F9F9F9; } to { background-color: #F0F0F0; } }
+        .dark.ambient-active { animation: ambient-pulse-dark 8s infinite alternate; }
+        @keyframes ambient-pulse-dark { from { background-color: #0A0A0A; } to { background-color: #111111; } }
+        
+        /* Inputs */
+        input[type="number"] { outline: none; -moz-appearance: textfield; }
     </style>
 </head>
-<body class="bg-[#F9F9F9] text-[#1A1A1A] h-screen flex flex-col items-center justify-center overflow-hidden">
+<body class="h-screen flex flex-col items-center justify-center overflow-hidden text-[#1A1A1A]">
 
+    <!-- Top Navigation Bar -->
     <div class="absolute top-8 right-8 flex gap-4 z-50 items-center">
-        <div class="flex items-center gap-3 bg-white/50 dark:bg-white/5 p-2 px-4 rounded-full border border-gray-100 dark:border-gray-800">
-            <button id="ambientToggle" class="hover:scale-110 transition-all">
-                <svg id="soundOffIcon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path></svg>
+        <!-- Audio Group -->
+        <div class="flex items-center gap-3 bg-white/50 dark:bg-white/5 p-2 px-4 rounded-full border border-gray-200 dark:border-gray-800 backdrop-blur-sm">
+            <button id="ambientToggle" class="hover:scale-110 transition-all group" title="Toggle Brown Noise">
+                <svg id="soundOffIcon" class="w-4 h-4 opacity-60 group-hover:opacity-100" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path></svg>
                 <svg id="soundOnIcon" class="hidden w-4 h-4 text-orange-500" fill="currentColor" viewBox="0 0 24 24"><path d="M13.5 4.06c-.22-.13-.48-.13-.7 0L6.47 8.38H3c-.55 0-1 .45-1 1v5.24c0 .55.45 1 1 1h3.47l6.33 4.32c.1.07.22.1.34.1.1 0 .2-.02.3-.07.23-.1.38-.34.38-.59V4.65c0-.25-.15-.49-.38-.59zM18.16 12l2.64-2.64c.2-.2.2-.51 0-.71-.2-.2-.51-.2-.71 0L17.45 11.3l-2.64-2.64c-.2-.2-.51-.2-.71 0-.2.2-.2.51 0 .71l2.64 2.64-2.64 2.64c-.2.2-.2.51 0 .71.1.1.23.15.35.15.12 0 .25-.05.35-.15l2.64-2.64 2.64 2.64c.1.1.23.15.35.15.12 0 .25-.05.35-.15.2-.2.2-.51 0-.71L18.16 12z"/></svg>
             </button>
-            <input type="range" id="volumeSlider" min="0" max="1" step="0.01" value="0.3">
+            <input type="range" id="volumeSlider" min="0" max="1" step="0.01" value="0.3" title="Noise Volume">
         </div>
-        <button id="statsBtn" class="p-3 rounded-full border border-gray-100 dark:border-gray-800 hover:scale-110 transition-all"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg></button>
-        <button id="settingsBtn" class="p-3 rounded-full border border-gray-100 dark:border-gray-800 hover:scale-110 transition-all"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path></svg></button>
+        
+        <!-- Stats Button -->
+        <button id="statsBtn" class="p-3 rounded-full border border-gray-200 dark:border-gray-800 hover:scale-110 transition-all bg-white/50 dark:bg-white/5 backdrop-blur-sm" title="Weekly Stats">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+        </button>
+
+        <!-- Settings Button -->
+        <button id="settingsBtn" class="p-3 rounded-full border border-gray-200 dark:border-gray-800 hover:scale-110 transition-all bg-white/50 dark:bg-white/5 backdrop-blur-sm" title="Settings">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+        </button>
+        
+        <!-- Theme Toggle -->
+        <button id="themeToggle" class="p-3 rounded-full border border-gray-200 dark:border-gray-800 hover:scale-110 transition-all bg-white/50 dark:bg-white/5 backdrop-blur-sm" title="Toggle Dark Mode">
+            <svg id="sunIcon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z"></path></svg>
+            <svg id="moonIcon" class="hidden w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+        </button>
     </div>
 
-    <div id="appContainer" class="flex flex-col items-center">
-        <div class="relative flex items-center justify-center">
-            <svg class="timer-circle w-72 h-72 md:w-80 md:h-80">
+    <!-- Main App Container -->
+    <div id="appContainer" class="flex flex-col items-center w-full max-w-md mx-auto">
+        
+        <!-- Circular Timer -->
+        <div class="relative flex items-center justify-center mb-12">
+            <svg class="timer-circle w-72 h-72 md:w-80 md:h-80 drop-shadow-2xl">
                 <circle cx="50%" cy="50%" r="45%" stroke="currentColor" stroke-width="1" fill="transparent" class="opacity-10"></circle>
                 <circle id="progress" cx="50%" cy="50%" r="45%" stroke="var(--accent)" stroke-width="6" fill="transparent" stroke-dasharray="1131" stroke-dashoffset="0" class="progress-ring"></circle>
             </svg>
             <div class="absolute text-center">
                 <h1 id="timeDisplay" class="text-7xl font-extrabold tracking-tighter tabular-nums">50:00</h1>
-                <p id="statusLabel" class="text-[9px] uppercase tracking-[0.5em] font-black opacity-30 mt-3">Ready</p>
+                <p id="statusLabel" class="text-[9px] uppercase tracking-[0.4em] font-black opacity-40 mt-3">Ready to Focus</p>
             </div>
         </div>
-        <div class="mt-12 flex flex-col items-center">
-            <div class="flex gap-10 items-center">
-                <button id="resetBtn" class="opacity-30 hover:opacity-100 text-[9px] font-black uppercase tracking-widest">Reset</button>
-                <button id="startBtn" class="bg-[#1A1A1A] text-white dark:bg-white dark:text-black px-12 py-5 rounded-full font-black text-xs tracking-widest uppercase active:scale-95 transition-all">Start</button>
-                <button id="switchBtn" class="opacity-30 hover:opacity-100 text-[9px] font-black uppercase tracking-widest">Skip</button>
+
+        <!-- Controls & Dots -->
+        <div class="flex flex-col items-center w-full">
+            <div class="main-btns flex gap-10 items-center transition-all duration-500">
+                <button id="resetBtn" class="opacity-30 hover:opacity-100 text-[9px] font-black uppercase tracking-widest transition-opacity">Reset</button>
+                <button id="startBtn" class="bg-[#1A1A1A] text-white dark:bg-white dark:text-black px-12 py-5 rounded-full font-black text-xs tracking-widest uppercase hover:shadow-2xl hover:scale-105 active:scale-95 transition-all">Start Session</button>
+                <button id="switchBtn" class="opacity-30 hover:opacity-100 text-[9px] font-black uppercase tracking-widest transition-opacity">Skip</button>
             </div>
-            <div id="sessionDots" class="mt-12 flex gap-4"></div>
+            
+            <div id="sessionDots" class="mt-12 flex gap-3 h-4">
+                <!-- Dots generated by JS -->
+            </div>
         </div>
     </div>
 
+    <!-- ================= MODALS ================= -->
+
+    <!-- 1. Health/Break Modal -->
+    <div id="healthModal" class="fixed inset-0 flex items-center justify-center p-6 bg-white/60 dark:bg-black/80">
+        <div class="bg-white dark:bg-[#111] p-10 rounded-[40px] shadow-2xl max-w-sm w-full border border-gray-100 dark:border-gray-800 text-center transform transition-all scale-100">
+            <div class="mb-6 inline-flex p-4 rounded-full bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            </div>
+            <h2 class="text-3xl font-black mb-3 tracking-tighter">Session Complete.</h2>
+            <p class="text-sm opacity-60 mb-8 leading-relaxed font-medium">Stand up. It's time to reset your body.</p>
+            
+            <ul class="text-left space-y-4 mb-8 text-xs font-bold opacity-80 bg-gray-50 dark:bg-white/5 p-6 rounded-2xl">
+                <li class="flex items-center gap-3"><span class="w-2 h-2 rounded-full bg-orange-500"></span> Stretch your lower back</li>
+                <li class="flex items-center gap-3"><span class="w-2 h-2 rounded-full bg-orange-500"></span> Look at something 20ft away</li>
+                <li class="flex items-center gap-3"><span class="w-2 h-2 rounded-full bg-orange-500"></span> Drink water</li>
+            </ul>
+
+            <button id="closeHealthModal" class="w-full py-4 bg-black text-white dark:bg-white dark:text-black rounded-2xl font-black text-[10px] uppercase tracking-widest hover:scale-105 transition-transform">Start Break Timer</button>
+        </div>
+    </div>
+
+    <!-- 2. Statistics Modal -->
     <div id="statsModal" class="fixed inset-0 flex items-center justify-center p-6 bg-white/60 dark:bg-black/80">
         <div class="bg-white dark:bg-[#111] p-10 rounded-[40px] shadow-2xl max-w-sm w-full border border-gray-100 dark:border-gray-800">
             <div class="flex justify-between items-start mb-8">
-                <div><h2 class="text-2xl font-black tracking-tighter">Activity</h2><p class="text-[9px] uppercase font-bold opacity-40">Last 7 Days</p></div>
-                <div class="text-right"><p id="totalHours" class="text-2xl font-black tracking-tighter text-orange-500">0.0</p><p class="text-[9px] uppercase font-bold opacity-40">Total Hours</p></div>
+                <div>
+                    <h2 class="text-2xl font-black tracking-tighter">Analytics</h2>
+                    <p class="text-[9px] uppercase font-bold opacity-40 mt-1">Last 7 Days</p>
+                </div>
+                <div class="text-right">
+                    <p id="totalHours" class="text-3xl font-black tracking-tighter text-orange-500">0.0</p>
+                    <p class="text-[9px] uppercase font-bold opacity-40 mt-1">Focus Hours</p>
+                </div>
             </div>
-            <div class="bar-container mb-2" id="graphContainer"></div>
-            <div class="flex justify-between px-1 mb-8" id="graphLabels"></div>
-            <button onclick="document.getElementById('statsModal').style.display='none'" class="w-full py-4 bg-black text-white dark:bg-white dark:text-black rounded-2xl font-black text-[10px] uppercase tracking-widest">Close</button>
+            
+            <div class="bar-container mb-2" id="graphContainer">
+                <!-- Bars injected via JS -->
+            </div>
+            <div class="flex justify-between px-1 mb-8" id="graphLabels">
+                <!-- Labels injected via JS -->
+            </div>
+            
+            <button onclick="document.getElementById('statsModal').style.display='none'" class="w-full py-4 bg-gray-100 dark:bg-white/10 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-gray-200 dark:hover:bg-white/20 transition-colors">Close</button>
         </div>
     </div>
 
+    <!-- 3. Settings Modal -->
     <div id="settingsModal" class="fixed inset-0 flex items-center justify-center p-6 bg-white/60 dark:bg-black/80">
         <div class="bg-white dark:bg-[#111] p-10 rounded-[40px] shadow-2xl max-w-sm w-full border border-gray-100 dark:border-gray-800">
-            <h2 class="text-2xl font-black mb-8 tracking-tighter">Settings</h2>
-            <div class="space-y-6">
-                <div class="flex justify-between items-center"><label class="text-[9px] font-bold uppercase tracking-widest opacity-40">Work (Min)</label><input type="number" id="workInput" class="w-16 p-2 rounded-lg text-center font-bold bg-gray-100 dark:bg-white/10"></div>
-                <div class="flex justify-between items-center"><label class="text-[9px] font-bold uppercase tracking-widest opacity-40">Break (Min)</label><input type="number" id="breakInput" class="w-16 p-2 rounded-lg text-center font-bold bg-gray-100 dark:bg-white/10"></div>
-                <div class="flex justify-between items-center"><label class="text-[9px] font-bold uppercase tracking-widest opacity-40">Daily Goal</label><input type="number" id="goalInput" class="w-16 p-2 rounded-lg text-center font-bold bg-gray-100 dark:bg-white/10"></div>
+            <h2 class="text-2xl font-black mb-8 tracking-tighter">Studio Settings</h2>
+            <div class="space-y-5">
+                <div class="flex justify-between items-center p-3 bg-gray-50 dark:bg-white/5 rounded-2xl">
+                    <label class="text-[10px] font-bold uppercase tracking-widest opacity-60 ml-2">Work (Min)</label>
+                    <input type="number" id="workInput" class="w-16 p-2 rounded-xl text-center font-bold bg-white dark:bg-black shadow-sm">
+                </div>
+                <div class="flex justify-between items-center p-3 bg-gray-50 dark:bg-white/5 rounded-2xl">
+                    <label class="text-[10px] font-bold uppercase tracking-widest opacity-60 ml-2">Break (Min)</label>
+                    <input type="number" id="breakInput" class="w-16 p-2 rounded-xl text-center font-bold bg-white dark:bg-black shadow-sm">
+                </div>
+                <div class="flex justify-between items-center p-3 bg-gray-50 dark:bg-white/5 rounded-2xl">
+                    <label class="text-[10px] font-bold uppercase tracking-widest opacity-60 ml-2">Daily Goal</label>
+                    <input type="number" id="goalInput" class="w-16 p-2 rounded-xl text-center font-bold bg-white dark:bg-black shadow-sm">
+                </div>
             </div>
-            <button id="saveSettings" class="w-full mt-10 py-4 bg-black text-white dark:bg-white dark:text-black rounded-2xl font-black text-[10px] uppercase tracking-widest">Apply Changes</button>
+            <div class="mt-8 flex gap-3">
+                <button id="resetDataBtn" class="flex-1 py-4 border border-red-200 dark:border-red-900/30 text-red-500 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-red-50 dark:hover:bg-red-900/10">Reset Data</button>
+                <button id="saveSettings" class="flex-[2] py-4 bg-black text-white dark:bg-white dark:text-black rounded-2xl font-black text-[10px] uppercase tracking-widest hover:scale-105 transition-transform">Save</button>
+            </div>
         </div>
     </div>
 
+    <!-- Hidden Audio Element for Alarm -->
     <audio id="alarmSound" loop src="https://assets.mixkit.co/active_storage/sfx/951/951-preview.mp3"></audio>
 
     <script>
+        // --- STORAGE & CONFIG ---
         const getSaved = (k, d) => localStorage.getItem(k) || d;
         const setSaved = (k, v) => localStorage.setItem(k, v);
 
+        // Load Settings
         let workTime = parseInt(getSaved('workTime', 50)) * 60;
         let breakTime = parseInt(getSaved('breakTime', 10)) * 60;
         let dailyGoal = parseInt(getSaved('dailyGoal', 8));
+        
+        // Load Stats
         let stats = JSON.parse(getSaved('studioStats', '{}'));
         const today = new Date().toISOString().split('T')[0];
         let completedToday = stats[today] || 0;
 
+        // State Variables
         let timeLeft = workTime, totalTime = workTime, timerId = null, isWork = true;
+        
+        // Audio Context (Brown Noise)
         let audioCtx, brownNoiseNode, gainNode, ambientPlaying = false;
 
+        // --- CORE FUNCTIONS ---
+
         function updateDisplay() {
-            const m = Math.floor(timeLeft / 60), s = timeLeft % 60;
+            // Time String
+            const m = Math.floor(timeLeft / 60);
+            const s = timeLeft % 60;
             const timeStr = `${m}:${s < 10 ? '0' : ''}${s}`;
-            document.getElementById('timeDisplay').textContent = timeStr;
-            document.title = timerId ? `${timeStr} | Focus` : 'Studio Timer';
             
-            // Visual Gradient Flow for work
-            if (isWork && timeLeft < 300) {
+            // DOM Updates
+            document.getElementById('timeDisplay').textContent = timeStr;
+            document.title = timerId ? `${timeStr} | ${isWork ? 'Deep Work' : 'Rest'}` : 'Studio Timer';
+            
+            // Visual Gradient Flow (Orange heat map in last 5 mins of work)
+            if (isWork && timeLeft < 300 && timerId) {
                 const intensity = (300 - timeLeft) / 300;
-                document.body.style.backgroundColor = `rgba(255, 92, 0, ${intensity * 0.1})`;
+                // Subtle tint on background
+                document.body.style.backgroundColor = document.body.classList.contains('dark') 
+                    ? `rgba(20, 10, 5, ${1})` // Dark mode tint
+                    : `rgba(255, 92, 0, ${intensity * 0.08})`; // Light mode tint
+            } else if (!isWork) {
+                // Cool tint for break
+                document.body.style.backgroundColor = document.body.classList.contains('dark') 
+                    ? '#050A05' 
+                    : '#F0FDF4'; 
+            } else {
+                // Reset to default
+                document.body.style.backgroundColor = '';
             }
 
+            // Circular Progress
             const progress = document.getElementById('progress');
-            const circum = 2 * Math.PI * 144;
+            const circum = 2 * Math.PI * (window.innerWidth < 768 ? 129.6 : 144);
+            progress.style.strokeDasharray = `${circum}`;
             progress.style.strokeDashoffset = circum - (timeLeft / totalTime) * circum;
         }
 
+        // --- AUDIO ENGINE (BROWN NOISE) ---
         function initAudio() {
-            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            audioCtx = new AudioContext();
             gainNode = audioCtx.createGain();
             gainNode.gain.value = document.getElementById('volumeSlider').value;
+            
+            // ScriptProcessor to generate noise buffer
             const bufferSize = 4096;
-            let lastOut = 0.0;
             brownNoiseNode = audioCtx.createScriptProcessor(bufferSize, 1, 1);
             brownNoiseNode.onaudioprocess = (e) => {
                 const output = e.outputBuffer.getChannelData(0);
+                let lastOut = 0.0;
                 for (let i = 0; i < bufferSize; i++) {
                     const white = Math.random() * 2 - 1;
                     output[i] = (lastOut + (0.02 * white)) / 1.02;
                     lastOut = output[i];
-                    output[i] *= 3.5; 
+                    output[i] *= 3.5; // Gain compensation
                 }
             };
             brownNoiseNode.connect(gainNode);
-        }
-
-        function triggerAlarm() {
-            clearInterval(timerId); timerId = null;
-            document.getElementById('alarmSound').play();
-            document.getElementById('startBtn').textContent = 'Stop Alarm';
-            if (ambientPlaying) toggleAmbient();
         }
 
         function toggleAmbient() {
@@ -153,59 +267,149 @@
                 ambientPlaying = true;
                 document.getElementById('soundOffIcon').classList.add('hidden');
                 document.getElementById('soundOnIcon').classList.remove('hidden');
+                document.body.classList.add('ambient-active');
             } else {
                 gainNode.disconnect();
                 ambientPlaying = false;
                 document.getElementById('soundOffIcon').classList.remove('hidden');
                 document.getElementById('soundOnIcon').classList.add('hidden');
+                document.body.classList.remove('ambient-active');
             }
         }
 
+        // --- NOTIFICATIONS & ALARM ---
+        function triggerAlarm() {
+            clearInterval(timerId); timerId = null;
+            document.getElementById('alarmSound').play();
+            document.getElementById('startBtn').textContent = 'Stop Alarm';
+            document.getElementById('startBtn').classList.add('bg-red-600', 'text-white', 'hover:bg-red-700');
+            
+            // Browser Notification
+            if (Notification.permission === "granted") {
+                new Notification(isWork ? "Session Complete" : "Break Over", {
+                    body: isWork ? "Time to stand up and stretch." : "Ready to get back to work?",
+                    icon: "https://cdn-icons-png.flaticon.com/512/2921/2921226.png"
+                });
+            }
+            
+            // Stop ambient noise if playing so you hear the alarm
+            if (ambientPlaying) toggleAmbient();
+        }
+
+        function stopAlarm() {
+            const alarm = document.getElementById('alarmSound');
+            alarm.pause();
+            alarm.currentTime = 0;
+            
+            const btn = document.getElementById('startBtn');
+            btn.textContent = 'Start';
+            btn.classList.remove('bg-red-600', 'text-white', 'hover:bg-red-700');
+
+            if (isWork) {
+                // Log the session
+                completedToday++;
+                stats[today] = completedToday;
+                setSaved('studioStats', JSON.stringify(stats));
+                setSaved('completedSessions', completedToday); // Legacy support
+                
+                initDots();
+                // Show Health Modal
+                document.getElementById('healthModal').style.display = 'flex';
+            } else {
+                switchMode();
+            }
+        }
+
+        function switchMode() {
+            isWork = !isWork;
+            
+            // Soft Lockdown Logic
+            const container = document.getElementById('appContainer');
+            if (!isWork) container.classList.add('soft-lockdown');
+            else container.classList.remove('soft-lockdown');
+
+            timeLeft = isWork ? workTime : breakTime;
+            totalTime = timeLeft;
+            
+            // Visual Updates
+            document.getElementById('statusLabel').textContent = isWork ? 'Ready to Focus' : 'Recovery Mode';
+            document.documentElement.style.setProperty('--accent', isWork ? '#FF5C00' : '#00E676'); // Orange vs Green
+            
+            updateDisplay();
+            document.getElementById('startBtn').textContent = 'Start ' + (isWork ? 'Focus' : 'Break');
+        }
+
+        // --- STATISTICS ---
         function renderStats() {
             const container = document.getElementById('graphContainer');
             const labels = document.getElementById('graphLabels');
             const hoursDisplay = document.getElementById('totalHours');
+            
             container.innerHTML = ''; labels.innerHTML = '';
+            
             const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
             const curr = new Date();
             let totalSessions = 0;
+            
             for(let i=6; i>=0; i--) {
-                const d = new Date(); d.setDate(curr.getDate() - i);
+                const d = new Date(); 
+                d.setDate(curr.getDate() - i);
                 const dateStr = d.toISOString().split('T')[0];
                 const count = stats[dateStr] || 0;
                 totalSessions += count;
+                
+                // Cap height at 100% (daily goal)
                 const height = Math.min((count / dailyGoal) * 100, 100);
-                container.innerHTML += `<div class="bar flex-1" style="height: ${height}%"></div>`;
-                labels.innerHTML += `<div class="bar-label flex-1 text-center text-[8px] font-bold opacity-40 mt-2">${days[d.getDay()]}</div>`;
+                
+                // Color bar orange if goal met, gray if not
+                const barColor = count >= dailyGoal ? 'var(--accent)' : 'currentColor';
+                const opacity = count >= dailyGoal ? '1' : '0.3';
+                
+                container.innerHTML += `<div class="bar flex-1" style="height: ${height}%; background-color: ${barColor}; opacity: ${opacity}"></div>`;
+                labels.innerHTML += `<div class="flex-1 text-center text-[8px] font-bold opacity-40 uppercase">${days[d.getDay()]}</div>`;
             }
-            hoursDisplay.textContent = ((totalSessions * (workTime / 60)) / 60).toFixed(1);
+            
+            // Calc Total Hours
+            const hours = (totalSessions * (workTime / 60)) / 60;
+            hoursDisplay.textContent = hours.toFixed(1);
         }
 
-        // Event Listeners
+        // --- DOTS ---
+        function initDots() {
+            const container = document.getElementById('sessionDots');
+            container.innerHTML = '';
+            for(let i=0; i<dailyGoal; i++) {
+                const dot = document.createElement('div');
+                dot.className = 'session-dot' + (i < completedToday ? ' completed' : '');
+                container.appendChild(dot);
+            }
+        }
+
+        // --- EVENT LISTENERS ---
+        
+        // Start/Pause Logic
         document.getElementById('startBtn').addEventListener('click', () => {
-            if (!document.getElementById('alarmSound').paused) {
-                document.getElementById('alarmSound').pause();
-                document.getElementById('alarmSound').currentTime = 0;
-                if (isWork) { 
-                    completedToday++; 
-                    stats[today] = completedToday; 
-                    setSaved('studioStats', JSON.stringify(stats)); 
-                }
-                isWork = !isWork;
-                timeLeft = isWork ? workTime : breakTime;
-                totalTime = timeLeft;
-                document.getElementById('statusLabel').textContent = isWork ? 'Deep Work' : 'Recovery';
-                updateDisplay(); initDots();
-                document.getElementById('startBtn').textContent = 'Start';
+            // Check for Notification Permission
+            if (Notification.permission === "default") Notification.requestPermission();
+
+            const alarm = document.getElementById('alarmSound');
+            if (!alarm.paused) {
+                stopAlarm();
             } else if (timerId) {
                 clearInterval(timerId); timerId = null;
                 document.getElementById('startBtn').textContent = 'Resume';
+                document.title = 'Paused | Studio Timer';
             } else {
                 document.getElementById('startBtn').textContent = 'Pause';
-                timerId = setInterval(() => { timeLeft--; updateDisplay(); if (timeLeft <= 0) triggerAlarm(); }, 1000);
+                timerId = setInterval(() => {
+                    timeLeft--;
+                    updateDisplay();
+                    if (timeLeft <= 0) triggerAlarm();
+                }, 1000);
             }
         });
 
+        // Settings Logic
         document.getElementById('settingsBtn').addEventListener('click', () => {
             document.getElementById('workInput').value = workTime / 60;
             document.getElementById('breakInput').value = breakTime / 60;
@@ -220,26 +424,58 @@
             location.reload();
         });
 
+        document.getElementById('resetDataBtn').addEventListener('click', () => {
+            if(confirm('Clear all statistics and reset settings?')) {
+                localStorage.clear();
+                location.reload();
+            }
+        });
+
+        // Other Buttons
         document.getElementById('statsBtn').addEventListener('click', () => {
             renderStats();
             document.getElementById('statsModal').style.display = 'flex';
         });
 
-        document.getElementById('ambientToggle').addEventListener('click', toggleAmbient);
-        document.getElementById('volumeSlider').addEventListener('input', (e) => { if (gainNode) gainNode.gain.value = e.target.value; });
-        document.getElementById('resetBtn').addEventListener('click', () => location.reload());
+        document.getElementById('closeHealthModal').addEventListener('click', () => {
+            document.getElementById('healthModal').style.display = 'none';
+            switchMode();
+            // Auto-start break timer
+            timerId = setInterval(() => { timeLeft--; updateDisplay(); if (timeLeft <= 0) triggerAlarm(); }, 1000);
+            document.getElementById('startBtn').textContent = 'Pause';
+        });
 
-        function initDots() {
-            const container = document.getElementById('sessionDots');
-            container.innerHTML = '';
-            for(let i=0; i<dailyGoal; i++) {
-                const dot = document.createElement('div');
-                dot.className = 'session-dot' + (i < completedToday ? ' completed' : '');
-                container.appendChild(dot);
+        document.getElementById('switchBtn').addEventListener('click', () => {
+            if (!document.getElementById('alarmSound').paused) stopAlarm();
+            switchMode();
+        });
+
+        document.getElementById('resetBtn').addEventListener('click', () => {
+            if(confirm('Restart current session?')) {
+                clearInterval(timerId); timerId = null;
+                timeLeft = totalTime;
+                updateDisplay();
+                document.getElementById('startBtn').textContent = 'Start';
             }
-        }
+        });
 
-        initDots(); updateDisplay();
+        // Toggles
+        document.getElementById('ambientToggle').addEventListener('click', toggleAmbient);
+        
+        document.getElementById('themeToggle').addEventListener('click', () => {
+            document.body.classList.toggle('dark');
+            document.getElementById('sunIcon').classList.toggle('hidden');
+            document.getElementById('moonIcon').classList.toggle('hidden');
+        });
+
+        document.getElementById('volumeSlider').addEventListener('input', (e) => {
+            if (gainNode) gainNode.gain.value = e.target.value;
+        });
+
+        // Initialization
+        initDots();
+        updateDisplay();
+
     </script>
 </body>
 </html>
