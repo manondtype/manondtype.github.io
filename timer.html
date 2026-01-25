@@ -146,17 +146,17 @@
     </main>
 
     <footer class="absolute bottom-6 left-6 z-40">
-        <span id="versionLabel" class="text-[10px] font-extrabold uppercase tracking-[0.2em] opacity-40 transition-opacity">v.2026.1.09</span>
+        <span id="versionLabel" class="text-[10px] font-extrabold uppercase tracking-[0.2em] opacity-40 transition-opacity">v.2026.1.10</span>
     </footer>
 
     <!-- Modals -->
     <div id="settingsModal" class="fixed inset-0 hidden flex items-center justify-center p-4 modal-backdrop opacity-0 transition-opacity duration-300">
-        <div class="bg-surface-light dark:bg-surface-dark w-full max-sm rounded-[32px] shadow-2xl border border-zinc-200 dark:border-zinc-800 p-8 transform scale-95 transition-transform duration-300">
-            <div class="flex justify-between items-center mb-8">
+        <div class="bg-surface-light dark:bg-surface-dark w-full max-w-md max-h-[90vh] rounded-[32px] shadow-2xl border border-zinc-200 dark:border-zinc-800 flex flex-col transform scale-95 transition-transform duration-300">
+            <div class="flex justify-between items-center p-8 pb-4">
                 <h3 class="text-xl font-bold tracking-tight">Settings</h3>
                 <button class="close-modal opacity-40 hover:opacity-100"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
             </div>
-            <div class="space-y-6 overflow-y-auto max-h-[50vh] no-scrollbar pr-2">
+            <div class="flex-1 overflow-y-auto px-8 py-4 no-scrollbar space-y-6">
                 <div class="space-y-2">
                     <label class="text-[10px] font-bold uppercase tracking-widest opacity-50">Theme</label>
                     <div class="grid grid-cols-3 gap-2 bg-zinc-100 dark:bg-zinc-800 p-1 rounded-xl">
@@ -169,15 +169,15 @@
                     <label class="text-[10px] font-bold uppercase tracking-widest opacity-50">Durations (Min) & Goal</label>
                     <div class="grid grid-cols-3 gap-3">
                         <div class="bg-zinc-50 dark:bg-zinc-900 p-3 rounded-2xl border border-zinc-200 dark:border-zinc-700">
-                            <span class="text-[8px] opacity-60 font-bold uppercase">Work</span>
+                            <span class="text-[8px] opacity-60 font-bold uppercase block mb-1">Work</span>
                             <input type="number" id="workInput" class="bg-transparent font-bold text-lg outline-none w-full">
                         </div>
                         <div class="bg-zinc-50 dark:bg-zinc-900 p-3 rounded-2xl border border-zinc-200 dark:border-zinc-700">
-                            <span class="text-[8px] opacity-60 font-bold uppercase">Break</span>
+                            <span class="text-[8px] opacity-60 font-bold uppercase block mb-1">Break</span>
                             <input type="number" id="breakInput" class="bg-transparent font-bold text-lg outline-none w-full">
                         </div>
                         <div class="bg-zinc-50 dark:bg-zinc-900 p-3 rounded-2xl border border-zinc-200 dark:border-zinc-700">
-                            <span class="text-[8px] opacity-60 font-bold uppercase">Goal</span>
+                            <span class="text-[8px] opacity-60 font-bold uppercase block mb-1">Goal</span>
                             <input type="number" id="goalInput" class="bg-transparent font-bold text-lg outline-none w-full">
                         </div>
                     </div>
@@ -204,26 +204,32 @@
                     <button id="factoryResetBtn" class="w-full py-3 rounded-2xl border border-danger/30 text-danger text-[10px] font-bold uppercase tracking-widest hover:bg-danger/5 transition-colors">Clear All Local Data</button>
                 </div>
             </div>
-            <button id="saveSettings" class="w-full mt-8 py-4 rounded-2xl bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 font-bold text-xs uppercase tracking-widest hover:scale-105 active:scale-95 transition-all">Save Changes</button>
+            <div class="p-8 pt-4">
+                <button id="saveSettings" class="w-full py-4 rounded-2xl bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 font-bold text-xs uppercase tracking-widest hover:scale-105 active:scale-95 transition-all">Save Changes</button>
+            </div>
         </div>
     </div>
 
     <div id="statsModal" class="fixed inset-0 hidden flex items-center justify-center p-4 modal-backdrop opacity-0 transition-opacity duration-300">
-        <div class="bg-surface-light dark:bg-surface-dark w-full max-sm rounded-[32px] shadow-2xl border border-zinc-200 dark:border-zinc-800 p-8 transform scale-95 transition-transform duration-300">
-            <div class="flex justify-between items-start mb-10">
+        <div class="bg-surface-light dark:bg-surface-dark w-full max-w-md max-h-[90vh] rounded-[32px] shadow-2xl border border-zinc-200 dark:border-zinc-800 flex flex-col transform scale-95 transition-transform duration-300">
+            <div class="flex justify-between items-start p-8 pb-4">
                 <h3 class="text-xl font-bold tracking-tight leading-tight">Weekly<br>Analytics</h3>
                 <div class="text-right">
                     <span id="totalHours" class="text-3xl font-extrabold text-accent tracking-tighter">0.0</span>
                     <p class="text-[10px] font-bold uppercase tracking-widest opacity-40">Focus Hours</p>
                 </div>
             </div>
-            <div class="flex items-end justify-between gap-2 h-32 mb-4" id="graphContainer"></div>
-            <div class="flex justify-between px-1 mb-8" id="graphLabels"></div>
-            <div id="mondayResetContainer" class="hidden mb-6 p-4 bg-accent/10 border border-accent/20 rounded-2xl text-center">
-                <p class="text-[10px] font-bold uppercase tracking-widest text-accent mb-3">New Week Detected</p>
-                <button id="confirmWeeklyReset" class="w-full py-3 rounded-xl bg-accent text-white font-bold text-[10px] uppercase tracking-widest shadow-lg shadow-accent/20">Archive & Reset Stats</button>
+            <div class="flex-1 overflow-y-auto px-8 py-4 no-scrollbar">
+                <div class="flex items-end justify-between gap-2 h-32 mb-4" id="graphContainer"></div>
+                <div class="flex justify-between px-1 mb-8" id="graphLabels"></div>
+                <div id="mondayResetContainer" class="hidden mb-6 p-4 bg-accent/10 border border-accent/20 rounded-2xl text-center">
+                    <p class="text-[10px] font-bold uppercase tracking-widest text-accent mb-3">New Week Detected</p>
+                    <button id="confirmWeeklyReset" class="w-full py-3 rounded-xl bg-accent text-white font-bold text-[10px] uppercase tracking-widest shadow-lg shadow-accent/20">Archive & Reset Stats</button>
+                </div>
             </div>
-            <button class="close-modal w-full py-4 rounded-2xl bg-zinc-100 dark:bg-zinc-800 font-bold text-xs uppercase tracking-widest">Close</button>
+            <div class="p-8 pt-4">
+                <button class="close-modal w-full py-4 rounded-2xl bg-zinc-100 dark:bg-zinc-800 font-bold text-xs uppercase tracking-widest">Close</button>
+            </div>
         </div>
     </div>
 
@@ -275,13 +281,9 @@
             
             document.getElementById('statusLabel').textContent = state.isWork ? 'Deep Work' : 'Recovery';
             
-            // Refactored guidance logic to prevent empty states
+            // Critical: Updating guidance text based on mode
             const guidance = document.getElementById('guidanceLabel');
-            if (state.isWork) {
-                guidance.textContent = 'Focus on your high-value tasks.';
-            } else {
-                guidance.textContent = 'Step away from the screen for a moment.';
-            }
+            guidance.textContent = state.isWork ? 'Focus on your high-value tasks.' : 'Step away from the screen for a moment.';
             
             document.getElementById('versionLabel').style.opacity = state.showVersion ? '0.4' : '0';
         }
@@ -354,6 +356,10 @@
             state.timeLeft = state.isWork ? state.workTime : state.breakTime;
             state.totalTime = state.timeLeft;
             
+            // Explicitly force text update
+            const guidance = document.getElementById('guidanceLabel');
+            guidance.textContent = state.isWork ? 'Focus on your high-value tasks.' : 'Step away from the screen for a moment.';
+            
             if (!state.isWork) {
                 lockControls();
                 if (autoStart) {
@@ -364,7 +370,6 @@
                 hideUnlockSlider();
                 document.getElementById('startBtn').textContent = 'Start Session';
             }
-            // Force update display immediately on switch to ensure guidance text updates
             updateDisplay();
         }
 
@@ -408,6 +413,7 @@
             const curr = new Date();
             let totalSessions = 0;
             
+            // Calculate sessions over last 7 days
             for(let i=6; i>=0; i--) {
                 const d = new Date(); d.setDate(curr.getDate() - i);
                 const dateStr = d.toISOString().split('T')[0];
@@ -418,8 +424,10 @@
                 labels.innerHTML += `<div class="flex-1 text-center text-[10px] font-bold opacity-30">${days[d.getDay()]}</div>`;
             }
             
+            // Convert sessions to focus hours
             const hoursPerSession = state.workTime / 3600;
-            document.getElementById('totalHours').textContent = (totalSessions * hoursPerSession).toFixed(1);
+            const totalHoursValue = (totalSessions * hoursPerSession).toFixed(1);
+            document.getElementById('totalHours').textContent = totalHoursValue;
             
             const isMonday = curr.getDay() === 1;
             const weekID = `${curr.getFullYear()}-W${getWeekNumber(curr)}`;
