@@ -138,17 +138,16 @@
     </main>
 
     <footer class="absolute bottom-6 left-6 z-40">
-        <span id="versionLabel" class="text-[8px] font-bold uppercase tracking-[0.2em] opacity-20 transition-opacity">2026.1.05</span>
+        <span id="versionLabel" class="text-[8px] font-bold uppercase tracking-[0.2em] opacity-20 transition-opacity">2026.1.06</span>
     </footer>
 
-    <!-- Settings Modal -->
+    <!-- Modals -->
     <div id="settingsModal" class="fixed inset-0 hidden flex items-center justify-center p-4 modal-backdrop opacity-0 transition-opacity duration-300">
         <div class="bg-surface-light dark:bg-surface-dark w-full max-w-sm rounded-[32px] shadow-2xl border border-zinc-200 dark:border-zinc-800 p-8 transform scale-95 transition-transform duration-300">
             <div class="flex justify-between items-center mb-8">
                 <h3 class="text-xl font-bold tracking-tight">Settings</h3>
                 <button class="close-modal opacity-40 hover:opacity-100"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
             </div>
-
             <div class="space-y-6 overflow-y-auto max-h-[50vh] no-scrollbar pr-2">
                 <div class="space-y-2">
                     <label class="text-[10px] font-bold uppercase tracking-widest opacity-50">Theme</label>
@@ -158,7 +157,6 @@
                         <button class="theme-opt py-2 rounded-lg text-[10px] font-bold transition-all" data-theme="system">Auto</button>
                     </div>
                 </div>
-
                 <div class="space-y-2">
                     <label class="text-[10px] font-bold uppercase tracking-widest opacity-50">Durations (Min) & Goal</label>
                     <div class="grid grid-cols-3 gap-3">
@@ -176,7 +174,6 @@
                         </div>
                     </div>
                 </div>
-
                 <div class="space-y-2">
                     <div class="flex justify-between"><label class="text-[10px] font-bold uppercase tracking-widest opacity-50">Sound Lab</label><span id="volPercent" class="text-[10px] font-bold opacity-50">50%</span></div>
                     <div class="bg-zinc-50 dark:bg-zinc-900 p-4 rounded-2xl border border-zinc-200 dark:border-zinc-700 space-y-4">
@@ -184,7 +181,6 @@
                         <button id="testAlarmBtn" class="w-full py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 text-[10px] font-bold uppercase tracking-widest hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors">Test Bell</button>
                     </div>
                 </div>
-
                 <div class="space-y-2">
                     <label class="text-[10px] font-bold uppercase tracking-widest opacity-50">Display</label>
                     <div class="bg-zinc-50 dark:bg-zinc-900 p-4 rounded-2xl border border-zinc-200 dark:border-zinc-700 flex justify-between items-center">
@@ -195,18 +191,15 @@
                         </label>
                     </div>
                 </div>
-
                 <div class="space-y-2 pt-2">
                     <label class="text-[10px] font-bold uppercase tracking-widest opacity-50 text-danger">Advanced</label>
                     <button id="factoryResetBtn" class="w-full py-3 rounded-2xl border border-danger/30 text-danger text-[10px] font-bold uppercase tracking-widest hover:bg-danger/5 transition-colors">Clear All Local Data</button>
                 </div>
             </div>
-
             <button id="saveSettings" class="w-full mt-8 py-4 rounded-2xl bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 font-bold text-xs uppercase tracking-widest hover:scale-105 active:scale-95 transition-all">Save Changes</button>
         </div>
     </div>
 
-    <!-- Analytics Modal -->
     <div id="statsModal" class="fixed inset-0 hidden flex items-center justify-center p-4 modal-backdrop opacity-0 transition-opacity duration-300">
         <div class="bg-surface-light dark:bg-surface-dark w-full max-sm rounded-[32px] shadow-2xl border border-zinc-200 dark:border-zinc-800 p-8 transform scale-95 transition-transform duration-300">
             <div class="flex justify-between items-start mb-10">
@@ -218,17 +211,14 @@
             </div>
             <div class="flex items-end justify-between gap-2 h-32 mb-4" id="graphContainer"></div>
             <div class="flex justify-between px-1 mb-8" id="graphLabels"></div>
-            
             <div id="mondayResetContainer" class="hidden mb-6 p-4 bg-accent/10 border border-accent/20 rounded-2xl text-center">
                 <p class="text-[10px] font-bold uppercase tracking-widest text-accent mb-3">New Week Detected</p>
                 <button id="confirmWeeklyReset" class="w-full py-3 rounded-xl bg-accent text-white font-bold text-[10px] uppercase tracking-widest shadow-lg shadow-accent/20">Archive & Reset Stats</button>
             </div>
-
             <button class="close-modal w-full py-4 rounded-2xl bg-zinc-100 dark:bg-zinc-800 font-bold text-xs uppercase tracking-widest">Close</button>
         </div>
     </div>
 
-    <!-- Confirm Reset Modal -->
     <div id="confirmModal" class="fixed inset-0 hidden flex items-center justify-center p-4 modal-backdrop opacity-0 transition-opacity duration-300">
         <div class="bg-surface-light dark:bg-surface-dark w-full max-w-[280px] rounded-[32px] shadow-2xl p-8 text-center transform scale-95 transition-transform duration-300">
             <h3 class="text-lg font-bold mb-2">Are you sure?</h3>
@@ -261,8 +251,7 @@
         state.timeLeft = state.workTime;
         state.totalTime = state.workTime;
 
-        let audioCtx, brownNoiseNode, gainNode;
-        let unlockTimer = null;
+        let audioCtx, brownNoiseNode, gainNode, unlockTimer = null;
 
         function updateDisplay() {
             const m = Math.floor(state.timeLeft / 60);
@@ -311,7 +300,6 @@
             startBtn.className = "h-16 px-10 rounded-full bg-red-500 text-white font-bold text-sm uppercase tracking-widest shadow-xl animate-pulse transition-all";
             
             document.body.classList.add('unlocked-temp');
-            
             if (Notification.permission === "granted") new Notification(state.isWork ? "Focus Complete" : "Break Over");
 
             if (state.isWork) {
@@ -320,12 +308,7 @@
                 setSaved('studioStats', JSON.stringify(state.stats));
                 initDots();
             } else {
-                state.isWork = true;
-                state.timeLeft = state.workTime;
-                state.totalTime = state.timeLeft;
-                document.body.classList.remove('soft-lockdown', 'unlocked-temp');
-                hideUnlockSlider();
-                updateDisplay();
+                // Recovery end: only plays chime once.
                 alarm.onended = () => { if (!alarm.loop && state.isAlarmRinging) stopAlarmAndProceed(); };
             }
         }
@@ -338,23 +321,45 @@
             const startBtn = document.getElementById('startBtn');
             startBtn.classList.remove('bg-red-500', 'animate-pulse');
             startBtn.className = "h-16 px-10 rounded-full bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 font-bold text-sm uppercase tracking-widest shadow-xl hover:scale-105 active:scale-95 transition-all";
-            startBtn.textContent = 'Start Session';
-
-            if (!document.body.classList.contains('soft-lockdown') && state.isWork) {
-                switchMode();
+            
+            if (state.isWork) {
+                // WORK COMPLETED -> AUTO START RECOVERY
+                switchMode(true); // Switch to recovery and auto-start
             } else {
-                updateDisplay();
+                // RECOVERY COMPLETED -> WAIT FOR MANUAL WORK START
+                switchMode(false); // Switch to work and wait
             }
         }
 
-        function switchMode() {
+        function switchMode(autoStart = false) {
             state.isWork = !state.isWork;
             state.timeLeft = state.isWork ? state.workTime : state.breakTime;
             state.totalTime = state.timeLeft;
-            document.getElementById('startBtn').textContent = 'Start Session';
-            if (!state.isWork) lockControls();
-            else { document.body.classList.remove('soft-lockdown', 'unlocked-temp'); hideUnlockSlider(); }
+            
+            if (!state.isWork) {
+                // Now in Recovery
+                lockControls();
+                if (autoStart) {
+                    setTimeout(() => startTimer(), 1000); // Small delay for visual transition
+                }
+            } else {
+                // Now in Deep Work
+                document.body.classList.remove('soft-lockdown', 'unlocked-temp');
+                hideUnlockSlider();
+                document.getElementById('startBtn').textContent = 'Start Session';
+            }
             updateDisplay();
+        }
+
+        function startTimer() {
+            if (state.timerId) return;
+            if (Notification.permission === "default") Notification.requestPermission();
+            state.timerId = setInterval(() => {
+                state.timeLeft--;
+                updateDisplay();
+                if (state.timeLeft <= 0) triggerAlarm();
+            }, 1000);
+            document.getElementById('startBtn').textContent = 'Pause';
         }
 
         function lockControls() {
@@ -382,7 +387,6 @@
             const days = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
             const curr = new Date();
             let totalSess = 0;
-            
             for(let i=6; i>=0; i--) {
                 const d = new Date(); d.setDate(curr.getDate() - i);
                 const dateStr = d.toISOString().split('T')[0];
@@ -393,15 +397,10 @@
                 labels.innerHTML += `<div class="flex-1 text-center text-[10px] font-bold opacity-30">${days[d.getDay()]}</div>`;
             }
             document.getElementById('totalHours').textContent = ((totalSess * state.workTime) / 3600).toFixed(1);
-
-            // Check if it's Monday and we haven't prompted yet
             const isMonday = curr.getDay() === 1;
             const weekID = `${curr.getFullYear()}-W${getWeekNumber(curr)}`;
-            if (isMonday && state.lastResetPrompt !== weekID) {
-                document.getElementById('mondayResetContainer').classList.remove('hidden');
-            } else {
-                document.getElementById('mondayResetContainer').classList.add('hidden');
-            }
+            if (isMonday && state.lastResetPrompt !== weekID) document.getElementById('mondayResetContainer').classList.remove('hidden');
+            else document.getElementById('mondayResetContainer').classList.add('hidden');
         }
 
         function getWeekNumber(d) {
@@ -449,24 +448,13 @@
             setTimeout(() => m.classList.add('hidden'), 300);
         }
 
-        // Logic for Factory Reset
         document.getElementById('factoryResetBtn').addEventListener('click', () => openModal('confirmModal'));
-        document.getElementById('executeReset').addEventListener('click', () => {
-            localStorage.clear();
-            window.location.reload();
-        });
-
-        // Logic for Monday Reset
+        document.getElementById('executeReset').addEventListener('click', () => { localStorage.clear(); window.location.reload(); });
         document.getElementById('confirmWeeklyReset').addEventListener('click', () => {
-            state.stats = {};
-            setSaved('studioStats', '{}');
-            const curr = new Date();
-            const weekID = `${curr.getFullYear()}-W${getWeekNumber(curr)}`;
-            state.lastResetPrompt = weekID;
-            setSaved('lastResetPrompt', weekID);
-            renderStats();
-            initDots();
-            document.getElementById('mondayResetContainer').classList.add('hidden');
+            state.stats = {}; setSaved('studioStats', '{}');
+            const curr = new Date(); const weekID = `${curr.getFullYear()}-W${getWeekNumber(curr)}`;
+            state.lastResetPrompt = weekID; setSaved('lastResetPrompt', weekID);
+            renderStats(); initDots(); document.getElementById('mondayResetContainer').classList.add('hidden');
         });
 
         const thumb = document.getElementById('unlockThumb');
@@ -477,8 +465,7 @@
         window.addEventListener('mousemove', e => {
             if (!isDragging) return;
             let d = Math.max(0, Math.min(e.clientX - startX, maxSlide));
-            thumb.style.transform = `translateX(${d}px)`;
-            bg.style.width = `${(d / maxSlide) * 100}%`;
+            thumb.style.transform = `translateX(${d}px)`; bg.style.width = `${(d / maxSlide) * 100}%`;
             if (d >= maxSlide) { onUnlock(); isDragging = false; }
         });
         window.addEventListener('mouseup', () => { 
@@ -486,14 +473,11 @@
             thumb.style.transition = 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
             thumb.style.transform = `translateX(0px)`; bg.style.width = '0%';
         });
-
-        // Touch support
         thumb.addEventListener('touchstart', e => { isDragging = true; startX = e.touches[0].clientX; thumb.style.transition = 'none'; });
         window.addEventListener('touchmove', e => {
             if (!isDragging) return;
             let d = Math.max(0, Math.min(e.touches[0].clientX - startX, maxSlide));
-            thumb.style.transform = `translateX(${d}px)`;
-            bg.style.width = `${(d / maxSlide) * 100}%`;
+            thumb.style.transform = `translateX(${d}px)`; bg.style.width = `${(d / maxSlide) * 100}%`;
             if (d >= maxSlide) { onUnlock(); isDragging = false; }
         });
         window.addEventListener('touchend', () => { 
@@ -515,14 +499,11 @@
         document.getElementById('startBtn').addEventListener('click', () => {
             if (state.isAlarmRinging) stopAlarmAndProceed();
             else if (state.timerId) { clearInterval(state.timerId); state.timerId = null; document.getElementById('startBtn').textContent = 'Resume'; }
-            else {
-                state.timerId = setInterval(() => { state.timeLeft--; updateDisplay(); if (state.timeLeft <= 0) triggerAlarm(); }, 1000);
-                document.getElementById('startBtn').textContent = 'Pause';
-            }
+            else startTimer();
         });
 
         document.getElementById('resetBtn').addEventListener('click', () => {
-            const alarm = document.getElementById('alarmSound'); alarm.pause(); alarm.currentTime = 0; state.isAlarmRinging = false;
+            const a = document.getElementById('alarmSound'); a.pause(); a.currentTime = 0; state.isAlarmRinging = false;
             clearInterval(state.timerId); state.timerId = null;
             state.timeLeft = state.isWork ? state.workTime : state.breakTime; state.totalTime = state.timeLeft;
             const b = document.getElementById('startBtn'); b.textContent = 'Start Session';
@@ -530,7 +511,7 @@
             if(!state.isWork) lockControls(); updateDisplay();
         });
 
-        document.getElementById('switchBtn').addEventListener('click', switchMode);
+        document.getElementById('switchBtn').addEventListener('click', () => switchMode(false));
         document.getElementById('ambientToggle').addEventListener('click', toggleBrownNoise);
         document.getElementById('settingsBtn').addEventListener('click', () => {
             document.getElementById('workInput').value = state.workTime / 60;
