@@ -3,165 +3,140 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Focus | 50:10 Timer</title>
+    <title>Focus | Studio Immersive v2</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;500;800&display=swap" rel="stylesheet">
     <style>
         :root { --accent: #FF5C00; }
-        body { font-family: 'Manrope', sans-serif; transition: background-color 0.4s ease, color 0.4s ease; }
-        .dark { background-color: #121212 !important; color: #F2F2F2 !important; }
+        body { font-family: 'Manrope', sans-serif; transition: background-color 0.8s ease; }
+        .dark { background-color: #0A0A0A !important; color: #F2F2F2 !important; }
         .timer-circle { transform: rotate(-90deg); }
-        .progress-ring { transition: stroke-dashoffset 0.3s linear, stroke 0.4s ease; stroke-linecap: round; }
-        @keyframes alarm-pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
-        .animate-alarm { animation: alarm-pulse 0.6s infinite; }
-        #healthModal { backdrop-filter: blur(12px); display: none; }
-        .session-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); opacity: 0.3; transition: all 0.3s ease; }
-        .session-dot.completed { opacity: 1; transform: scale(1.2); box-shadow: 0 0 10px var(--accent); }
+        .progress-ring { transition: stroke-dashoffset 1s linear, stroke 0.5s ease; stroke-linecap: round; }
+        
+        /* Volume Slider Styling */
+        input[type=range] { -webkit-appearance: none; background: transparent; cursor: pointer; width: 80px; }
+        input[type=range]::-webkit-slider-runnable-track { background: rgba(155, 155, 155, 0.2); height: 4px; border-radius: 2px; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 12px; width: 12px; border-radius: 50%; background: var(--accent); margin-top: -4px; box-shadow: 0 0 10px rgba(255, 92, 0, 0.3); }
+
+        .session-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); opacity: 0.15; }
+        .session-dot.completed { opacity: 1; box-shadow: 0 0 8px var(--accent); }
+        
+        #statsModal, #settingsModal { backdrop-filter: blur(20px); display: none; z-index: 100; }
+        .ambient-active { animation: ambient-pulse 8s infinite alternate; }
+        @keyframes ambient-pulse { from { background-color: #F9F9F9; } to { background-color: #F2F2F2; } }
     </style>
 </head>
 <body class="bg-[#F9F9F9] text-[#1A1A1A] h-screen flex flex-col items-center justify-center overflow-hidden">
 
-    <div class="absolute top-8 right-8">
-        <button id="themeToggle" class="p-3 rounded-full border border-gray-200 dark:border-gray-800 transition-all hover:scale-110">
-            <svg id="sunIcon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z"></path></svg>
-            <svg id="moonIcon" class="hidden w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+    <div class="absolute top-8 right-8 flex gap-6 z-50 items-center">
+        <div class="flex items-center gap-3 bg-white/50 dark:bg-white/5 p-2 px-4 rounded-full border border-gray-100 dark:border-gray-800">
+            <button id="ambientToggle" class="hover:scale-110 transition-all" title="Toggle Brown Noise">
+                <svg id="soundOffIcon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path></svg>
+                <svg id="soundOnIcon" class="hidden w-4 h-4 text-orange-500" fill="currentColor" viewBox="0 0 24 24"><path d="M13.5 4.06c-.22-.13-.48-.13-.7 0L6.47 8.38H3c-.55 0-1 .45-1 1v5.24c0 .55.45 1 1 1h3.47l6.33 4.32c.1.07.22.1.34.1.1 0 .2-.02.3-.07.23-.1.38-.34.38-.59V4.65c0-.25-.15-.49-.38-.59zM18.16 12l2.64-2.64c.2-.2.2-.51 0-.71-.2-.2-.51-.2-.71 0L17.45 11.3l-2.64-2.64c-.2-.2-.51-.2-.71 0-.2.2-.2.51 0 .71l2.64 2.64-2.64 2.64c-.2.2-.2.51 0 .71.1.1.23.15.35.15.12 0 .25-.05.35-.15l2.64-2.64 2.64 2.64c.1.1.23.15.35.15.12 0 .25-.05.35-.15.2-.2.2-.51 0-.71L18.16 12z"/></svg>
+            </button>
+            <input type="range" id="volumeSlider" min="0" max="1" step="0.01" value="0.5">
+        </div>
+        
+        <button id="statsBtn" class="p-3 rounded-full border border-gray-200 dark:border-gray-800 hover:scale-110 transition-all">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
         </button>
     </div>
 
-    <div class="relative flex flex-col items-center">
+    <div id="appContainer" class="flex flex-col items-center">
         <div class="relative flex items-center justify-center">
-            <svg class="timer-circle w-72 h-72 md:w-96 md:h-96">
-                <circle cx="50%" cy="50%" r="45%" stroke="currentColor" stroke-width="2" fill="transparent" class="opacity-10"></circle>
+            <svg class="timer-circle w-72 h-72 md:w-80 md:h-80">
+                <circle cx="50%" cy="50%" r="45%" stroke="currentColor" stroke-width="1" fill="transparent" class="opacity-10"></circle>
                 <circle id="progress" cx="50%" cy="50%" r="45%" stroke="var(--accent)" stroke-width="6" fill="transparent" stroke-dasharray="1131" stroke-dashoffset="0" class="progress-ring"></circle>
             </svg>
             <div class="absolute text-center">
-                <h1 id="timeDisplay" class="text-7xl md:text-8xl font-extrabold tracking-tighter tabular-nums">50:00</h1>
-                <p id="statusLabel" class="text-xs uppercase tracking-[0.4em] font-bold opacity-50 mt-4">Work Session</p>
+                <h1 id="timeDisplay" class="text-7xl font-extrabold tracking-tighter tabular-nums">50:00</h1>
+                <p id="statusLabel" class="text-[9px] uppercase tracking-[0.5em] font-black opacity-30 mt-3">Ready</p>
             </div>
         </div>
-        
-        <div class="mt-16 flex gap-10 items-center">
-            <button id="resetBtn" class="opacity-30 hover:opacity-100 transition-opacity uppercase text-[10px] tracking-widest font-black">Reset</button>
-            <button id="startBtn" class="bg-[#1A1A1A] text-white dark:bg-white dark:text-black px-12 py-5 rounded-full font-extrabold text-sm tracking-widest uppercase hover:shadow-xl transition-all">Start</button>
-            <button id="switchBtn" class="opacity-30 hover:opacity-100 transition-opacity uppercase text-[10px] tracking-widest font-black">Skip</button>
-        </div>
-
         <div class="mt-12 flex flex-col items-center">
-            <p class="text-[10px] uppercase tracking-widest font-bold opacity-30 mb-3">Today's Progress</p>
-            <div id="sessionDots" class="flex gap-3">
-                </div>
-        </div>
-    </div>
-
-    <div id="healthModal" class="fixed inset-0 z-50 flex items-center justify-center p-6 bg-white/40 dark:bg-black/40">
-        <div class="bg-white dark:bg-[#1A1A1A] p-10 rounded-[40px] shadow-2xl max-w-sm w-full text-center border border-gray-100 dark:border-gray-800">
-            <h2 class="text-2xl font-extrabold mb-2 tracking-tight">Time to move!</h2>
-            <p class="text-sm opacity-60 mb-8 leading-relaxed">Work block complete. Stand up and stretch your back.</p>
-            <ul class="text-left space-y-4 mb-10 text-sm font-medium">
-                <li><span class="text-orange-500 mr-2">●</span> Reach for the ceiling for 10s</li>
-                <li><span class="text-orange-500 mr-2">●</span> Look away from all screens</li>
-                <li><span class="text-orange-500 mr-2">●</span> Walk for 1 minute</li>
-            </ul>
-            <button id="closeModal" class="w-full py-4 bg-orange-500 text-white rounded-2xl font-bold hover:bg-orange-600 transition-colors">Start 10min Break</button>
+            <div class="flex gap-10 items-center">
+                <button id="resetBtn" class="opacity-30 hover:opacity-100 text-[9px] font-black uppercase tracking-widest">Reset</button>
+                <button id="startBtn" class="bg-[#1A1A1A] text-white dark:bg-white dark:text-black px-12 py-5 rounded-full font-black text-xs tracking-widest uppercase hover:shadow-2xl transition-all">Start</button>
+                <button id="switchBtn" class="opacity-30 hover:opacity-100 text-[9px] font-black uppercase tracking-widest">Skip</button>
+            </div>
+            <div id="sessionDots" class="mt-12 flex gap-4"></div>
         </div>
     </div>
 
     <audio id="alarmSound" loop src="https://assets.mixkit.co/active_storage/sfx/951/951-preview.mp3"></audio>
-    <button id="testAudio" class="absolute bottom-8 text-[10px] opacity-20 hover:opacity-100 uppercase font-bold">Test Alarm Sound</button>
 
     <script>
-        let workTime = 50 * 60, breakTime = 10 * 60;
-        let timeLeft = workTime, totalTime = workTime;
-        let isWorkSession = true, timerId = null, completedSessions = 0;
+        let workTime = 50 * 60, timeLeft = 50 * 60, totalTime = 50 * 60, timerId = null, isWork = true;
+        
+        // Audio Context Setup
+        let audioCtx, brownNoiseNode, gainNode, ambientPlaying = false;
 
-        const timeDisplay = document.getElementById('timeDisplay');
-        const startBtn = document.getElementById('startBtn');
-        const progressCircle = document.getElementById('progress');
-        const alarmSound = document.getElementById('alarmSound');
-        const healthModal = document.getElementById('healthModal');
-        const dotsContainer = document.getElementById('sessionDots');
-
-        // Initialize Tracker Dots (8 potential sessions)
-        for(let i=0; i<8; i++) {
-            const dot = document.createElement('div');
-            dot.className = 'session-dot';
-            dotsContainer.appendChild(dot);
+        function initAudio() {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            gainNode = audioCtx.createGain();
+            gainNode.gain.value = document.getElementById('volumeSlider').value;
+            
+            const bufferSize = 4096;
+            let lastOut = 0.0;
+            brownNoiseNode = audioCtx.createScriptProcessor(bufferSize, 1, 1);
+            brownNoiseNode.onaudioprocess = (e) => {
+                const output = e.outputBuffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) {
+                    const white = Math.random() * 2 - 1;
+                    output[i] = (lastOut + (0.02 * white)) / 1.02;
+                    lastOut = output[i];
+                    output[i] *= 3.5; 
+                }
+            };
+            brownNoiseNode.connect(gainNode);
         }
+
+        function toggleAmbient() {
+            if (!audioCtx) initAudio();
+            if (!ambientPlaying) {
+                gainNode.connect(audioCtx.destination);
+                ambientPlaying = true;
+                document.getElementById('soundOffIcon').classList.add('hidden');
+                document.getElementById('soundOnIcon').classList.remove('hidden');
+                document.body.classList.add('ambient-active');
+            } else {
+                gainNode.disconnect();
+                ambientPlaying = false;
+                document.getElementById('soundOffIcon').classList.remove('hidden');
+                document.getElementById('soundOnIcon').classList.add('hidden');
+                document.body.classList.remove('ambient-active');
+            }
+        }
+
+        document.getElementById('volumeSlider').addEventListener('input', (e) => {
+            if (gainNode) gainNode.gain.value = e.target.value;
+        });
 
         function updateDisplay() {
             const m = Math.floor(timeLeft / 60), s = timeLeft % 60;
-            timeDisplay.textContent = `${m}:${s < 10 ? '0' : ''}${s}`;
-            const circum = 2 * Math.PI * (window.innerWidth < 768 ? 129.6 : 172.8);
-            progressCircle.style.strokeDasharray = `${circum}`;
-            progressCircle.style.strokeDashoffset = circum - (timeLeft / totalTime) * circum;
+            const timeStr = `${m}:${s < 10 ? '0' : ''}${s}`;
+            document.getElementById('timeDisplay').textContent = timeStr;
+            document.title = timerId ? `${timeStr} | Focus` : 'Studio Timer';
+            
+            const progress = document.getElementById('progress');
+            const circum = 2 * Math.PI * 144;
+            progress.style.strokeDashoffset = circum - (timeLeft / totalTime) * circum;
         }
 
-        function toggleTimer() {
-            if (!alarmSound.paused) { stopAlarm(); return; }
-            if (timerId) { clearInterval(timerId); timerId = null; startBtn.textContent = 'Resume'; } 
+        document.getElementById('startBtn').addEventListener('click', () => {
+            if (timerId) { clearInterval(timerId); timerId = null; } 
             else {
-                startBtn.textContent = 'Pause';
                 timerId = setInterval(() => {
                     timeLeft--; updateDisplay();
-                    if (timeLeft <= 0) triggerAlarm();
+                    if (timeLeft <= 0) { 
+                        clearInterval(timerId); 
+                        document.getElementById('alarmSound').play();
+                    }
                 }, 1000);
             }
-        }
-
-        function triggerAlarm() {
-            clearInterval(timerId); timerId = null;
-            alarmSound.play();
-            startBtn.textContent = 'Stop Alarm';
-            startBtn.classList.add('bg-red-600', 'text-white', 'animate-alarm');
-        }
-
-        function stopAlarm() {
-            alarmSound.pause(); alarmSound.currentTime = 0;
-            startBtn.classList.remove('bg-red-600', 'text-white', 'animate-alarm');
-            if (isWorkSession) {
-                completedSessions++;
-                updateTracker();
-                healthModal.style.display = 'flex';
-            } else {
-                switchMode();
-            }
-        }
-
-        function updateTracker() {
-            const dots = document.querySelectorAll('.session-dot');
-            if (completedSessions <= dots.length) {
-                dots[completedSessions - 1].classList.add('completed');
-            }
-        }
-
-        closeModal.addEventListener('click', () => {
-            healthModal.style.display = 'none';
-            switchMode();
-            toggleTimer();
         });
 
-        function switchMode() {
-            isWorkSession = !isWorkSession;
-            timeLeft = isWorkSession ? workTime : breakTime;
-            totalTime = timeLeft;
-            document.getElementById('statusLabel').textContent = isWorkSession ? 'Work Session' : 'Micro Break';
-            document.documentElement.style.setProperty('--accent', isWorkSession ? '#FF5C00' : '#00E676');
-            updateDisplay();
-            startBtn.textContent = 'Start ' + (isWorkSession ? 'Work' : 'Break');
-        }
-
-        document.getElementById('themeToggle').addEventListener('click', () => {
-            document.body.classList.toggle('dark');
-            document.getElementById('sunIcon').classList.toggle('hidden');
-            document.getElementById('moonIcon').classList.toggle('hidden');
-        });
-
-        document.getElementById('testAudio').addEventListener('mousedown', () => alarmSound.play());
-        document.getElementById('testAudio').addEventListener('mouseup', () => { alarmSound.pause(); alarmSound.currentTime = 0; });
-        startBtn.addEventListener('click', toggleTimer);
-        document.getElementById('resetBtn').addEventListener('click', () => { location.reload(); });
-        document.getElementById('switchBtn').addEventListener('click', () => { alarmSound.pause(); switchMode(); });
-
+        document.getElementById('ambientToggle').addEventListener('click', toggleAmbient);
         updateDisplay();
     </script>
 </body>
