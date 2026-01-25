@@ -12,7 +12,6 @@
             theme: {
                 extend: {
                     fontFamily: { 
-                        // Manrope handles Latin characters/numbers; Noto Sans Thai follows for Thai characters
                         sans: ['Manrope', 'Noto Sans Thai', 'sans-serif'],
                     },
                     colors: {
@@ -63,7 +62,6 @@
             100% { background-position: 0% 50%; }
         }
 
-        /* Ensure Thai text specifically uses Noto Sans Thai when language is switched */
         [lang="th"] { font-family: 'Manrope', 'Noto Sans Thai', sans-serif; }
     </style>
 </head>
@@ -108,6 +106,7 @@
             <div class="absolute inset-0 flex flex-col items-center justify-center text-center">
                 <h2 id="timeDisplay" class="text-7xl font-bold tracking-tighter tabular-nums">50:00</h2>
                 <div class="flex flex-col items-center gap-1 mt-4">
+                    <!-- Session labels now strictly English -->
                     <span id="statusLabel" class="text-[10px] font-bold uppercase tracking-[0.4em] opacity-40">Deep Work</span>
                 </div>
             </div>
@@ -147,8 +146,8 @@
         <span id="versionLabel" class="text-[10px] font-extrabold uppercase tracking-[0.2em] opacity-40 transition-opacity">v.2026.1.25.c</span>
     </footer>
 
-    <!-- Gemini AI Response Modal -->
-    <div id="aiModal" class="fixed inset-0 hidden flex items-center justify-center p-4 modal-backdrop opacity-0 transition-opacity duration-300">
+    <!-- Gemini AI Response Modal - Higher Z-index to avoid overlap -->
+    <div id="aiModal" class="fixed inset-0 hidden flex items-center justify-center p-4 modal-backdrop opacity-0 transition-opacity duration-300 z-[60]">
         <div class="bg-surface-light dark:bg-surface-dark w-full max-w-md rounded-[32px] shadow-2xl border border-zinc-200 dark:border-zinc-800 flex flex-col transform scale-95 transition-transform duration-300 overflow-hidden">
             <div class="flex justify-between items-center p-8 pb-4">
                 <h3 id="aiTitle" class="text-xl font-bold tracking-tight">✨ Focus Intelligence</h3>
@@ -236,31 +235,31 @@
         </div>
     </div>
 
-    <!-- Analytics Modal -->
-    <div id="statsModal" class="fixed inset-0 hidden flex items-center justify-center p-4 modal-backdrop opacity-0 transition-opacity duration-300">
-        <div class="bg-surface-light dark:bg-surface-dark w-full max-md rounded-[32px] shadow-2xl border border-zinc-200 dark:border-zinc-800 flex flex-col transform scale-95 transition-transform duration-300">
-            <div class="flex justify-between items-start p-8 pb-2">
-                <h3 id="statsTitle" class="text-xl font-bold tracking-tight leading-tight">Weekly<br>Analytics</h3>
-                <div class="flex gap-6">
+    <!-- Analytics Modal - Optimized for Desktop -->
+    <div id="statsModal" class="fixed inset-0 hidden flex items-center justify-center p-4 modal-backdrop opacity-0 transition-opacity duration-300 z-50">
+        <div class="bg-surface-light dark:bg-surface-dark w-full max-w-2xl rounded-[32px] shadow-2xl border border-zinc-200 dark:border-zinc-800 flex flex-col transform scale-95 transition-transform duration-300">
+            <div class="flex justify-between items-start p-10 pb-4">
+                <h3 id="statsTitle" class="text-3xl font-bold tracking-tight leading-tight">Weekly<br>Analytics</h3>
+                <div class="flex gap-8">
                     <div class="text-right">
-                        <span id="todayHours" class="text-2xl font-extrabold text-zinc-400 tracking-tighter">0h 00m</span>
-                        <p id="todayLabel" class="text-[8px] font-bold uppercase tracking-widest opacity-40">Today</p>
+                        <span id="todayHours" class="text-3xl font-extrabold text-zinc-400 tracking-tighter">0h 00m</span>
+                        <p id="todayLabel" class="text-[10px] font-bold uppercase tracking-widest opacity-40">Today</p>
                     </div>
                     <div class="text-right">
-                        <span id="totalHours" class="text-2xl font-extrabold text-accent tracking-tighter">0h 00m</span>
-                        <p id="weeklyLabel" class="text-[8px] font-bold uppercase tracking-widest opacity-40">Weekly</p>
+                        <span id="totalHours" class="text-3xl font-extrabold text-accent tracking-tighter">0h 00m</span>
+                        <p id="weeklyLabel" class="text-[10px] font-bold uppercase tracking-widest opacity-40">Weekly</p>
                     </div>
                 </div>
             </div>
-            <div class="flex-1 overflow-y-auto px-8 py-4 no-scrollbar">
-                <div class="flex items-end justify-between gap-2 h-32 mb-4" id="graphContainer"></div>
-                <div id="graphLabels" class="flex justify-between px-1 mb-6"></div>
+            <div class="flex-1 overflow-y-auto px-10 py-6 no-scrollbar">
+                <div class="flex items-end justify-between gap-4 h-48 mb-6" id="graphContainer"></div>
+                <div id="graphLabels" class="flex justify-between px-2 mb-10"></div>
                 
-                <button id="aiInsightsBtn" class="w-full py-3 mb-6 rounded-2xl sparkle-btn text-white font-bold text-[10px] uppercase tracking-widest shadow-lg flex items-center justify-center gap-2">
+                <button id="aiInsightsBtn" class="w-full py-4 mb-8 rounded-2xl sparkle-btn text-white font-bold text-xs uppercase tracking-widest shadow-lg flex items-center justify-center gap-2 transform hover:scale-[1.02] active:scale-[0.98] transition-transform">
                     ✨ Generate AI Performance Review
                 </button>
             </div>
-            <div class="p-8 pt-4">
+            <div class="p-10 pt-4">
                 <button id="statsCloseBtn" class="close-modal w-full py-4 rounded-2xl bg-zinc-100 dark:bg-zinc-800 font-bold text-xs uppercase tracking-widest">Close</button>
             </div>
         </div>
@@ -289,8 +288,6 @@
                 brandNameSub: 'Timer',
                 ambientLabel: 'Focus Audio',
                 aiProtocol: '✨ AI Protocol',
-                deepWork: 'Deep Work',
-                recovery: 'Recovery',
                 workGuidance: 'Focus on your high-value tasks.',
                 breakGuidance: 'Step away from the screen for a moment.',
                 reset: 'Reset',
@@ -334,8 +331,6 @@
                 brandNameSub: 'ตัวจับเวลา',
                 ambientLabel: 'เสียงบรรยากาศ',
                 aiProtocol: '✨ แผนกู้คืนสมาธิ AI',
-                deepWork: 'ช่วงทำงานหนัก',
-                recovery: 'ช่วงพักกู้คืน',
                 workGuidance: 'จดจ่อกับงานที่สำคัญที่สุดของคุณ',
                 breakGuidance: 'พักสายตาและลุกเดินสักครู่',
                 reset: 'เริ่มใหม่',
@@ -470,8 +465,15 @@
 
         async function generatePerformanceReview() {
             const t = translations[state.lang];
-            if (!state.userApiKey) { openModal('aiModal'); document.getElementById('aiContent').innerText = translations[state.lang].apiKeyNote; return; }
+            if (!state.userApiKey) { 
+                closeModal('statsModal');
+                openModal('aiModal'); 
+                document.getElementById('aiContent').innerText = translations[state.lang].apiKeyNote; 
+                return; 
+            }
             
+            // Close stats modal first to avoid overlap
+            closeModal('statsModal');
             openModal('aiModal'); 
             document.getElementById('aiTitle').innerText = t.aiInsightsTitle;
             document.getElementById('aiContent').innerText = t.aiLoadingInsights;
@@ -492,7 +494,9 @@
             const progress = document.getElementById('progress');
             progress.style.strokeDashoffset = 283 - (state.timeLeft / state.totalTime) * 283;
             progress.style.color = state.isWork ? '#FF5C00' : '#10B981';
-            document.getElementById('statusLabel').textContent = state.isWork ? t.deepWork : t.recovery;
+            
+            // Labels are now hardcoded English as requested
+            document.getElementById('statusLabel').textContent = state.isWork ? "Deep Work" : "Recovery";
             document.getElementById('guidanceLabel').textContent = state.isWork ? t.workGuidance : t.breakGuidance;
             
             const startBtn = document.getElementById('startBtn');
@@ -668,8 +672,20 @@
             updateTexts();
         }
 
-        function openModal(id) { const m = document.getElementById(id); m.classList.remove('hidden'); setTimeout(() => { m.classList.remove('opacity-0'); m.children[0].classList.remove('scale-95'); }, 10); }
-        function closeModal(id) { const m = document.getElementById(id); m.classList.add('opacity-0'); m.children[0].classList.add('scale-95'); setTimeout(() => m.classList.add('hidden'), 300); }
+        function openModal(id) { 
+            const m = document.getElementById(id); 
+            m.classList.remove('hidden'); 
+            setTimeout(() => { 
+                m.classList.remove('opacity-0'); 
+                m.children[0].classList.remove('scale-95'); 
+            }, 10); 
+        }
+        function closeModal(id) { 
+            const m = document.getElementById(id); 
+            m.classList.add('opacity-0'); 
+            m.children[0].classList.add('scale-95'); 
+            setTimeout(() => m.classList.add('hidden'), 300); 
+        }
 
         const thumb = document.getElementById('unlockThumb');
         const bg = document.getElementById('unlockBg');
