@@ -146,7 +146,7 @@
 
     <!-- Gemini AI Response Modal -->
     <div id="aiModal" class="fixed inset-0 hidden flex items-center justify-center p-4 modal-backdrop opacity-0 transition-opacity duration-300">
-        <div class="bg-surface-light dark:bg-surface-dark w-full max-w-md max-h-[70vh] rounded-[32px] shadow-2xl border border-zinc-200 dark:border-zinc-800 flex flex-col transform scale-95 transition-transform duration-300 overflow-hidden">
+        <div class="bg-surface-light dark:bg-surface-dark w-full max-md rounded-[32px] shadow-2xl border border-zinc-200 dark:border-zinc-800 flex flex-col transform scale-95 transition-transform duration-300 overflow-hidden">
             <div class="flex justify-between items-center p-8 pb-4">
                 <h3 id="aiTitle" class="text-xl font-bold tracking-tight">✨ Focus Intelligence</h3>
                 <button class="close-modal opacity-40 hover:opacity-100"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
@@ -168,7 +168,6 @@
                 <button class="close-modal opacity-40 hover:opacity-100"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
             </div>
             <div class="flex-1 overflow-y-auto px-8 py-4 no-scrollbar space-y-6">
-                <!-- Theme Section -->
                 <div class="space-y-2">
                     <label class="text-[10px] font-bold uppercase tracking-widest opacity-50">Theme</label>
                     <div class="grid grid-cols-3 gap-2 bg-zinc-100 dark:bg-zinc-800 p-1 rounded-xl">
@@ -178,7 +177,6 @@
                     </div>
                 </div>
 
-                <!-- AI Setup Section -->
                 <div class="space-y-2">
                     <div class="flex justify-between items-center">
                         <label class="text-[10px] font-bold uppercase tracking-widest opacity-50">AI Configuration</label>
@@ -190,7 +188,6 @@
                     </div>
                 </div>
 
-                <!-- Durations Section -->
                 <div class="space-y-2">
                     <label class="text-[10px] font-bold uppercase tracking-widest opacity-50">Durations (Min) & Goal</label>
                     <div class="grid grid-cols-3 gap-3">
@@ -213,7 +210,6 @@
                     <div class="flex justify-between"><label class="text-[10px] font-bold uppercase tracking-widest opacity-50">Sound Lab</label><span id="volPercent" class="text-[10px] font-bold opacity-50">50%</span></div>
                     <div class="bg-zinc-50 dark:bg-zinc-900 p-4 rounded-2xl border border-zinc-200 dark:border-zinc-700 space-y-4">
                         <input type="range" id="volumeSlider" min="0" max="1" step="0.05" class="w-full">
-                        <button id="testAlarmBtn" class="w-full py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 text-[10px] font-bold uppercase tracking-widest hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors">Test Bell</button>
                     </div>
                 </div>
 
@@ -251,11 +247,6 @@
                 <button id="aiInsightsBtn" class="w-full py-3 mb-6 rounded-2xl sparkle-btn text-white font-bold text-[10px] uppercase tracking-widest shadow-lg flex items-center justify-center gap-2">
                     ✨ Generate AI Performance Review
                 </button>
-
-                <div id="mondayResetContainer" class="hidden mb-6 p-4 bg-accent/10 border border-accent/20 rounded-2xl text-center">
-                    <p class="text-[10px] font-bold uppercase tracking-widest text-accent mb-3">New Week Detected</p>
-                    <button id="confirmWeeklyReset" class="w-full py-3 rounded-xl bg-accent text-white font-bold text-[10px] uppercase tracking-widest shadow-lg shadow-accent/20">Archive & Reset Stats</button>
-                </div>
             </div>
             <div class="p-8 pt-4">
                 <button class="close-modal w-full py-4 rounded-2xl bg-zinc-100 dark:bg-zinc-800 font-bold text-xs uppercase tracking-widest">Close</button>
@@ -263,7 +254,6 @@
         </div>
     </div>
 
-    <!-- Confirm Modal -->
     <div id="confirmModal" class="fixed inset-0 hidden flex items-center justify-center p-4 modal-backdrop opacity-0 transition-opacity duration-300">
         <div class="bg-surface-light dark:bg-surface-dark w-full max-w-[280px] rounded-[32px] shadow-2xl p-8 text-center transform scale-95 transition-transform duration-300">
             <h3 class="text-lg font-bold mb-2">Are you sure?</h3>
@@ -275,7 +265,7 @@
         </div>
     </div>
 
-    <audio id="alarmSound" src="https://assets.mixkit.co/active_storage/sfx/951/951-preview.mp3" loop></audio>
+    <audio id="alarmSound" src="https://assets.mixkit.co/active_storage/sfx/951/951-preview.mp3"></audio>
 
     <script>
         const getSaved = (k, d) => localStorage.getItem(k) || d;
@@ -288,9 +278,7 @@
             theme: getSaved('theme', 'system'),
             stats: JSON.parse(getSaved('studioStats', '{}')),
             volume: parseFloat(getSaved('volume', 0.5)),
-            showVersion: getSaved('showVersion', 'true') === 'true',
             userApiKey: getSaved('geminiApiKey', ''),
-            lastResetPrompt: getSaved('lastResetPrompt', ''),
             timeLeft: 0, totalTime: 0, timerId: null, isWork: true, isAmbientPlaying: false,
             isAlarmRinging: false
         };
@@ -300,16 +288,14 @@
         let audioCtx, brownNoiseNode, gainNode, unlockTimer = null;
 
         async function callGemini(prompt, systemPrompt) {
-            if (!state.userApiKey) return "API KEY MISSING: Please go to Settings and enter your Gemini API key.";
+            if (!state.userApiKey) return "API KEY MISSING: Please go to Settings.";
             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${state.userApiKey}`;
             const payload = { contents: [{ parts: [{ text: prompt }] }], systemInstruction: { parts: [{ text: systemPrompt }] } };
             try {
                 const response = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-                if (response.status === 403) return "INVALID API KEY: The key provided is incorrect.";
-                if (response.status === 429) return "RATE LIMIT EXCEEDED: Please wait a minute.";
                 const data = await response.json();
-                return data.candidates?.[0]?.content?.parts?.[0]?.text || "Unexpected response format.";
-            } catch (err) { return "CONNECTION ERROR: Could not reach the server."; }
+                return data.candidates?.[0]?.content?.parts?.[0]?.text || "Error processing AI request.";
+            } catch (err) { return "CONNECTION ERROR."; }
         }
 
         async function generateFocusProtocol() {
@@ -354,27 +340,44 @@
         function triggerAlarm() {
             clearInterval(state.timerId);
             state.timerId = null;
-            state.isAlarmRinging = true;
 
             const alarm = document.getElementById('alarmSound');
             alarm.volume = state.volume;
             alarm.currentTime = 0;
-            alarm.loop = true; 
-            alarm.play().catch(e => console.log("Playback blocked"));
 
             if (state.isAmbientPlaying) toggleBrownNoise();
 
-            const startBtn = document.getElementById('startBtn');
-            startBtn.textContent = 'Stop Alarm';
-            startBtn.className = "h-16 px-10 rounded-full bg-red-500 text-white font-bold text-sm uppercase tracking-widest shadow-xl animate-pulse transition-all";
-            
             if (state.isWork) {
+                // WORK END: Requires Stop Button
+                state.isAlarmRinging = true;
+                alarm.loop = true;
+                alarm.play().catch(e => console.log("Playback blocked"));
+
+                const startBtn = document.getElementById('startBtn');
+                startBtn.textContent = 'Stop Alarm';
+                startBtn.className = "h-16 px-10 rounded-full bg-red-500 text-white font-bold text-sm uppercase tracking-widest shadow-xl animate-pulse transition-all";
+                
                 const today = new Date().toISOString().split('T')[0];
                 state.stats[today] = (state.stats[today] || 0) + 1;
                 setSaved('studioStats', JSON.stringify(state.stats));
                 initDots();
+                document.body.classList.add('unlocked-temp');
+            } else {
+                // RECOVERY END: Automatic transition
+                alarm.loop = false;
+                alarm.play().catch(e => console.log("Playback blocked"));
+                
+                // Return to Work state after a brief delay so the alarm is heard
+                setTimeout(() => {
+                    state.isWork = true;
+                    state.timeLeft = state.workTime;
+                    state.totalTime = state.timeLeft;
+                    document.body.classList.remove('soft-lockdown', 'unlocked-temp');
+                    hideUnlockSlider();
+                    resetStartBtn();
+                    updateDisplay();
+                }, 1500);
             }
-            document.body.classList.add('unlocked-temp');
         }
 
         function stopAlarmAndProceed() {
@@ -382,29 +385,26 @@
             alarm.pause(); alarm.currentTime = 0;
             state.isAlarmRinging = false;
             
+            resetStartBtn();
+            
+            // Workflow: Automatically start recovery
+            state.isWork = false;
+            state.timeLeft = state.breakTime;
+            state.totalTime = state.timeLeft;
+            
+            document.body.classList.add('soft-lockdown');
+            document.body.classList.remove('unlocked-temp');
+            resetSliderUI();
+            showUnlockSlider();
+            updateDisplay();
+            startTimer(); // Automatic recovery start
+        }
+
+        function resetStartBtn() {
             const startBtn = document.getElementById('startBtn');
             startBtn.classList.remove('bg-red-500', 'animate-pulse');
             startBtn.className = "h-16 px-10 rounded-full bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 font-bold text-sm uppercase tracking-widest shadow-xl hover:scale-105 active:scale-95 transition-all";
             startBtn.textContent = 'Start Session';
-            
-            switchMode(); 
-        }
-
-        function switchMode() {
-            state.isWork = !state.isWork;
-            state.timeLeft = state.isWork ? state.workTime : state.breakTime;
-            state.totalTime = state.timeLeft;
-            
-            if (!state.isWork) {
-                document.body.classList.add('soft-lockdown');
-                document.body.classList.remove('unlocked-temp');
-                resetSliderUI();
-                showUnlockSlider();
-            } else {
-                document.body.classList.remove('soft-lockdown', 'unlocked-temp');
-                hideUnlockSlider();
-            }
-            updateDisplay();
         }
 
         function startTimer() {
@@ -536,12 +536,25 @@
             document.getElementById('alarmSound').pause(); state.isAlarmRinging = false;
             clearInterval(state.timerId); state.timerId = null;
             state.timeLeft = state.isWork ? state.workTime : state.breakTime; updateDisplay();
-            document.getElementById('startBtn').textContent = 'Start Session';
+            resetStartBtn();
         });
 
         document.getElementById('switchBtn').addEventListener('click', () => {
             if(state.isAlarmRinging) stopAlarmAndProceed();
-            else switchMode();
+            else {
+                state.isWork = !state.isWork;
+                state.timeLeft = state.isWork ? state.workTime : state.breakTime;
+                state.totalTime = state.timeLeft;
+                if (!state.isWork) {
+                    document.body.classList.add('soft-lockdown');
+                    showUnlockSlider();
+                } else {
+                    document.body.classList.remove('soft-lockdown', 'unlocked-temp');
+                    hideUnlockSlider();
+                }
+                updateDisplay();
+                if (state.timerId) { clearInterval(state.timerId); state.timerId = null; startTimer(); }
+            }
         });
         document.getElementById('ambientToggle').addEventListener('click', toggleBrownNoise);
         document.getElementById('settingsBtn').addEventListener('click', () => {
@@ -570,7 +583,6 @@
         document.querySelectorAll('.theme-opt').forEach(b => b.addEventListener('click', () => setTheme(b.dataset.theme)));
         document.getElementById('volumeSlider').addEventListener('input', e => {
             state.volume = e.target.value; setSaved('volume', state.volume);
-            document.getElementById('volPercent').textContent = Math.round(state.volume * 100) + '%';
             if (gainNode) gainNode.gain.value = state.volume;
         });
 
