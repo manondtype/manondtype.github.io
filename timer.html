@@ -27,14 +27,42 @@
         .timer-svg { transform: rotate(-90deg); }
         .progress-ring { transition: stroke-dashoffset 1s linear, stroke 0.5s ease; stroke-linecap: round; }
         .bar { transition: height 1s cubic-bezier(0.4, 0, 0.2, 1); min-height: 2px; border-radius: 4px 4px 0 0; }
-        .modal-backdrop { background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
+        .modal-backdrop { background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); z-index: 50; }
         .dark .modal-backdrop { background: rgba(0, 0, 0, 0.4); }
         .no-scrollbar::-webkit-scrollbar { display: none; }
-        .soft-lockdown .controls-layer { opacity: 0.2; filter: blur(4px); pointer-events: none; transition: 0.5s; }
-        .soft-lockdown .controls-layer:hover { opacity: 1; filter: blur(0); pointer-events: auto; }
+        
+        /* Soft Lockdown State */
+        .soft-lockdown .controls-layer { 
+            opacity: 0.15; 
+            filter: blur(8px); 
+            pointer-events: none;
+            transition: 0.5s ease; 
+        }
+
+        /* Temporary Unlock State */
+        .unlocked-temp .controls-layer {
+            opacity: 1;
+            filter: blur(0);
+            pointer-events: auto;
+        }
+
+        /* Slider Styles */
+        #unlockSliderContainer {
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s;
+        }
+
         input[type=range] { -webkit-appearance: none; background: transparent; cursor: pointer; height: 24px; }
         input[type=range]::-webkit-slider-runnable-track { background: rgba(150, 150, 150, 0.2); height: 4px; border-radius: 2px; }
         input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 16px; width: 16px; border-radius: 50%; background: #FF5C00; margin-top: -6px; }
+
+        /* Custom Unlock Slider Handle */
+        .unlock-track {
+            background: rgba(150, 150, 150, 0.1);
+            border: 1px solid rgba(150, 150, 150, 0.2);
+        }
+        .dark .unlock-track {
+            background: rgba(255, 255, 255, 0.05);
+        }
     </style>
 </head>
 <body class="bg-bg-light dark:bg-bg-dark text-zinc-900 dark:text-zinc-100 h-screen flex flex-col overflow-hidden selection:bg-accent selection:text-white">
@@ -77,18 +105,37 @@
             </div>
         </div>
 
-        <div class="controls-layer flex flex-col items-center gap-12">
-            <div class="flex items-center gap-8">
-                <button id="resetBtn" class="text-[10px] font-bold uppercase tracking-widest opacity-30 hover:opacity-100 transition-opacity p-2">Reset</button>
-                <button id="startBtn" class="h-16 px-10 rounded-full bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 font-bold text-sm uppercase tracking-widest shadow-xl hover:scale-105 active:scale-95 transition-all">Start Session</button>
-                <button id="switchBtn" class="text-[10px] font-bold uppercase tracking-widest opacity-30 hover:opacity-100 transition-opacity p-2">Skip</button>
+        <div class="relative w-full flex flex-col items-center">
+            <!-- Controls -->
+            <div class="controls-layer flex flex-col items-center gap-12 z-10 w-full">
+                <div class="flex items-center gap-8">
+                    <button id="resetBtn" class="text-[10px] font-bold uppercase tracking-widest opacity-30 hover:opacity-100 transition-opacity p-2">Reset</button>
+                    <button id="startBtn" class="h-16 px-10 rounded-full bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 font-bold text-sm uppercase tracking-widest shadow-xl hover:scale-105 active:scale-95 transition-all">Start Session</button>
+                    <button id="switchBtn" class="text-[10px] font-bold uppercase tracking-widest opacity-30 hover:opacity-100 transition-opacity p-2">Skip</button>
+                </div>
+                <div id="sessionDots" class="flex gap-3 h-2 items-center"></div>
             </div>
-            <div id="sessionDots" class="flex gap-3 h-2 items-center"></div>
+
+            <!-- Slide to Unlock (Hidden by default) -->
+            <div id="unlockSliderContainer" class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-0 translate-y-4">
+                <div class="unlock-track w-64 h-14 rounded-full flex items-center px-1 pointer-events-auto relative overflow-hidden">
+                    <div id="unlockBg" class="absolute left-0 top-0 bottom-0 bg-accent/10 w-0 transition-none"></div>
+                    <div id="unlockThumb" class="w-12 h-12 rounded-full bg-white dark:bg-zinc-800 shadow-lg flex items-center justify-center cursor-grab active:cursor-grabbing z-20 relative transition-transform duration-75">
+                        <svg class="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                        </svg>
+                    </div>
+                    <div class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-30">
+                        <span class="text-[9px] font-bold uppercase tracking-[0.2em] ml-6">Slide to Unlock</span>
+                        <svg class="w-3 h-3 ml-2 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path></svg>
+                    </div>
+                </div>
+            </div>
         </div>
     </main>
 
     <!-- Settings Modal -->
-    <div id="settingsModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 modal-backdrop opacity-0 transition-opacity duration-300">
+    <div id="settingsModal" class="fixed inset-0 hidden flex items-center justify-center p-4 modal-backdrop opacity-0 transition-opacity duration-300">
         <div class="bg-surface-light dark:bg-surface-dark w-full max-w-sm rounded-[32px] shadow-2xl border border-zinc-200 dark:border-zinc-800 p-8 transform scale-95 transition-transform duration-300">
             <div class="flex justify-between items-center mb-8">
                 <h3 class="text-xl font-bold tracking-tight">Settings</h3>
@@ -137,7 +184,7 @@
     </div>
 
     <!-- Stats Modal -->
-    <div id="statsModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 modal-backdrop opacity-0 transition-opacity duration-300">
+    <div id="statsModal" class="fixed inset-0 hidden flex items-center justify-center p-4 modal-backdrop opacity-0 transition-opacity duration-300">
         <div class="bg-surface-light dark:bg-surface-dark w-full max-w-sm rounded-[32px] shadow-2xl border border-zinc-200 dark:border-zinc-800 p-8 transform scale-95 transition-transform duration-300">
             <div class="flex justify-between items-start mb-10">
                 <h3 class="text-xl font-bold tracking-tight leading-tight">Weekly<br>Analytics</h3>
@@ -153,7 +200,7 @@
     </div>
 
     <!-- Health Modal -->
-    <div id="healthModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 modal-backdrop opacity-0 transition-opacity duration-300">
+    <div id="healthModal" class="fixed inset-0 hidden flex items-center justify-center p-4 modal-backdrop opacity-0 transition-opacity duration-300">
         <div class="bg-surface-light dark:bg-surface-dark w-full max-w-sm rounded-[32px] shadow-2xl p-8 text-center transform scale-95 transition-transform duration-300">
             <div class="w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/20 text-green-600 dark:text-green-400 flex items-center justify-center mx-auto mb-6"><svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg></div>
             <h3 class="text-2xl font-bold mb-2">Block Complete</h3>
@@ -181,6 +228,7 @@
         state.totalTime = state.workTime;
 
         let audioCtx, brownNoiseNode, gainNode;
+        let unlockTimer = null;
 
         function updateDisplay() {
             const m = Math.floor(state.timeLeft / 60);
@@ -206,7 +254,6 @@
         }
 
         function resetTimer() {
-            // Stop alarm if it's playing
             const alarm = document.getElementById('alarmSound');
             alarm.pause();
             alarm.currentTime = 0;
@@ -216,9 +263,13 @@
             state.timeLeft = state.isWork ? state.workTime : state.breakTime;
             state.totalTime = state.timeLeft;
             
-            document.getElementById('btnText') ? document.getElementById('btnText').textContent = 'Start Session' : null;
-            document.getElementById('startBtn').textContent = 'Start Session';
-            document.getElementById('startBtn').className = "h-16 px-10 rounded-full bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 font-bold text-sm uppercase tracking-widest shadow-xl hover:scale-105 active:scale-95 transition-all";
+            const startBtn = document.getElementById('startBtn');
+            startBtn.textContent = 'Start Session';
+            startBtn.className = "h-16 px-10 rounded-full bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 font-bold text-sm uppercase tracking-widest shadow-xl hover:scale-105 active:scale-95 transition-all";
+            
+            // Relock after reset if in recovery
+            if(!state.isWork) lockControls();
+            
             updateDisplay();
         }
 
@@ -253,8 +304,13 @@
             alarm.volume = state.volume;
             alarm.play();
             if (state.isAmbientPlaying) toggleBrownNoise();
-            document.getElementById('startBtn').textContent = 'Stop Alarm';
-            document.getElementById('startBtn').classList.add('bg-red-500', 'text-white', 'animate-pulse');
+            const startBtn = document.getElementById('startBtn');
+            startBtn.textContent = 'Stop Alarm';
+            startBtn.classList.add('bg-red-500', 'text-white', 'animate-pulse');
+            
+            // Unlock immediately for the alarm
+            document.body.classList.add('unlocked-temp');
+            
             if (Notification.permission === "granted") new Notification(state.isWork ? "Focus Complete" : "Break Over");
         }
 
@@ -279,8 +335,33 @@
             state.totalTime = state.timeLeft;
             document.getElementById('statusLabel').textContent = state.isWork ? 'Deep Work' : 'Recovery';
             document.getElementById('startBtn').textContent = 'Start Session';
-            state.isWork ? document.body.classList.remove('soft-lockdown') : document.body.classList.add('soft-lockdown');
+            
+            if (!state.isWork) {
+                lockControls();
+            } else {
+                document.body.classList.remove('soft-lockdown', 'unlocked-temp');
+                hideUnlockSlider();
+            }
+            
             updateDisplay();
+        }
+
+        function lockControls() {
+            document.body.classList.add('soft-lockdown');
+            document.body.classList.remove('unlocked-temp');
+            showUnlockSlider();
+        }
+
+        function showUnlockSlider() {
+            const slider = document.getElementById('unlockSliderContainer');
+            slider.classList.remove('hidden', 'opacity-0', 'translate-y-4');
+            slider.classList.add('opacity-100', 'translate-y-0');
+        }
+
+        function hideUnlockSlider() {
+            const slider = document.getElementById('unlockSliderContainer');
+            slider.classList.add('opacity-0', 'translate-y-4');
+            setTimeout(() => slider.classList.add('hidden'), 400);
         }
 
         function renderStats() {
@@ -343,13 +424,72 @@
         }
 
         function openModal(id) {
-            const m = document.getElementById(id); m.classList.remove('hidden');
+            const m = document.getElementById(id); 
+            m.classList.remove('hidden');
             setTimeout(() => { m.classList.remove('opacity-0'); m.children[0].classList.remove('scale-95'); }, 10);
         }
         function closeModal(id) {
-            const m = document.getElementById(id); m.classList.add('opacity-0'); m.children[0].classList.add('scale-95');
+            const m = document.getElementById(id); 
+            m.classList.add('opacity-0'); 
+            m.children[0].classList.add('scale-95');
             setTimeout(() => m.classList.add('hidden'), 300);
         }
+
+        // Unlock Interaction Logic
+        const thumb = document.getElementById('unlockThumb');
+        const bg = document.getElementById('unlockBg');
+        let isDragging = false;
+        let startX = 0;
+        const maxSlide = 200; // Track width minus thumb width
+
+        function handleStart(e) {
+            isDragging = true;
+            startX = (e.type === 'touchstart' ? e.touches[0].clientX : e.clientX);
+            thumb.style.transition = 'none';
+        }
+
+        function handleMove(e) {
+            if (!isDragging) return;
+            const currentX = (e.type === 'touchmove' ? e.touches[0].clientX : e.clientX);
+            let diff = currentX - startX;
+            diff = Math.max(0, Math.min(diff, maxSlide));
+            thumb.style.transform = `translateX(${diff}px)`;
+            bg.style.width = `${(diff / maxSlide) * 100}%`;
+
+            if (diff >= maxSlide) {
+                onUnlock();
+                handleEnd();
+            }
+        }
+
+        function handleEnd() {
+            if (!isDragging) return;
+            isDragging = false;
+            thumb.style.transition = 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+            thumb.style.transform = `translateX(0px)`;
+            bg.style.width = '0%';
+        }
+
+        function onUnlock() {
+            document.body.classList.add('unlocked-temp');
+            hideUnlockSlider();
+            
+            // Auto-relock after 5 seconds of inactivity
+            if (unlockTimer) clearTimeout(unlockTimer);
+            unlockTimer = setTimeout(() => {
+                if (!state.isWork) {
+                    document.body.classList.remove('unlocked-temp');
+                    showUnlockSlider();
+                }
+            }, 5000);
+        }
+
+        thumb.addEventListener('mousedown', handleStart);
+        window.addEventListener('mousemove', handleMove);
+        window.addEventListener('mouseup', handleEnd);
+        thumb.addEventListener('touchstart', handleStart);
+        window.addEventListener('touchmove', handleMove);
+        window.addEventListener('touchend', handleEnd);
 
         document.getElementById('startBtn').addEventListener('click', toggleTimer);
         document.getElementById('resetBtn').addEventListener('click', resetTimer);
@@ -365,7 +505,7 @@
         document.getElementById('saveSettings').addEventListener('click', () => {
             state.workTime = document.getElementById('workInput').value * 60;
             state.breakTime = document.getElementById('breakInput').value * 60;
-            state.dailyGoal = document.getElementById('goalInput').value;
+            state.dailyGoal = parseInt(document.getElementById('goalInput').value) || 8;
             setSaved('workTime', document.getElementById('workInput').value);
             setSaved('breakTime', document.getElementById('breakInput').value);
             setSaved('dailyGoal', state.dailyGoal);
