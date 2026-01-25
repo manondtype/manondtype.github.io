@@ -40,6 +40,13 @@
         .bar { transition: height 1s cubic-bezier(0.4, 0, 0.2, 1); min-height: 2px; border-radius: 4px 4px 0 0; }
         .modal-backdrop { background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); z-index: 50; }
         .dark .modal-backdrop { background: rgba(0, 0, 0, 0.4); }
+        
+        /* Custom scrollbar for AI content */
+        .ai-scrollbar::-webkit-scrollbar { width: 4px; }
+        .ai-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .ai-scrollbar::-webkit-scrollbar-thumb { background: rgba(150, 150, 150, 0.2); border-radius: 10px; }
+        .dark .ai-scrollbar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); }
+
         .no-scrollbar::-webkit-scrollbar { display: none; }
         
         .controls-layer { transition: opacity 0.4s ease, filter 0.4s ease; }
@@ -153,15 +160,15 @@
 
     <!-- Gemini AI Response Modal -->
     <div id="aiModal" class="fixed inset-0 hidden flex items-center justify-center p-4 modal-backdrop opacity-0 transition-opacity duration-300 z-[60]">
-        <div class="bg-surface-light dark:bg-surface-dark w-full max-w-md rounded-[32px] shadow-2xl border border-zinc-200 dark:border-zinc-800 flex flex-col transform scale-95 transition-transform duration-300 overflow-hidden">
-            <div class="flex justify-between items-center p-8 pb-4">
+        <div class="bg-surface-light dark:bg-surface-dark w-full max-w-md max-h-[80vh] rounded-[32px] shadow-2xl border border-zinc-200 dark:border-zinc-800 flex flex-col transform scale-95 transition-transform duration-300 overflow-hidden">
+            <div class="flex justify-between items-center p-8 pb-4 shrink-0">
                 <h3 id="aiTitle" class="text-xl font-bold tracking-tight">✨ Focus Intelligence</h3>
                 <button class="close-modal opacity-40 hover:opacity-100"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
             </div>
-            <div id="aiContent" class="flex-1 overflow-y-auto px-8 py-4 no-scrollbar prose dark:prose-invert prose-zinc text-sm leading-relaxed opacity-80 whitespace-normal">
+            <div id="aiContent" class="flex-1 overflow-y-auto px-8 py-4 ai-scrollbar prose dark:prose-invert prose-zinc text-sm leading-relaxed opacity-80 whitespace-normal">
                 Generating your protocol...
             </div>
-            <div class="p-8 pt-4">
+            <div class="p-8 pt-4 shrink-0">
                 <button id="aiCloseBtn" class="close-modal w-full py-4 rounded-2xl bg-zinc-100 dark:bg-zinc-800 font-bold text-xs uppercase tracking-widest">Done</button>
             </div>
         </div>
@@ -483,9 +490,7 @@
 
                         if (data.error) {
                             lastError = data.error.message;
-                            // If it's 404 (model not found), break early to try the next model
                             if (response.status === 404) break;
-                            // Don't retry if it's a permanent error (4xx besides 429)
                             if (response.status >= 400 && response.status < 500 && response.status !== 429) break;
                         }
                     } catch (err) {
@@ -506,6 +511,7 @@
             openModal('aiModal'); 
             document.getElementById('aiTitle').innerText = t.aiProtocolTitle;
             document.getElementById('aiContent').innerHTML = `<div class='animate-pulse'>${t.aiLoading}</div>`;
+            document.getElementById('aiContent').scrollTop = 0;
             
             const prompt = `Suggest a short focused protocol for a ${state.workTime / 60} minute deep work session. Use rich markdown with headers, bold text, and lists. Focus on immediate clarity and environment.`;
             const systemPrompt = `You are a world-class productivity coach. Respond ONLY in ${state.lang === 'th' ? 'Thai' : 'English'}. Keep it motivating and actionable.`;
@@ -527,6 +533,7 @@
             openModal('aiModal'); 
             document.getElementById('aiTitle').innerText = t.aiInsightsTitle;
             document.getElementById('aiContent').innerHTML = `<div class='animate-pulse'>${t.aiLoadingInsights}</div>`;
+            document.getElementById('aiContent').scrollTop = 0;
             
             const history = Object.entries(state.timeHistory).slice(-7).map(([date, sec]) => `${date}: ${Math.floor(sec/60)} mins`).join(', ');
             const prompt = `Analyze this performance history: ${history || 'No data yet'}. Goal: ${state.dailyGoal} sessions/day. Provide a performance review in Markdown. Highlight strengths and one improvement.`;
