@@ -89,10 +89,10 @@
             <button id="statsBtn" class="p-3 rounded-2xl bg-white dark:bg-zinc-800 shadow-sm border border-zinc-200 dark:border-zinc-700 hover:scale-105 active:scale-95 transition-all">
                 <svg class="w-5 h-5 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
             </button>
-            <button id="settingsBtn" class="p-3 rounded-2xl bg-white dark:bg-zinc-800 shadow-sm border border-zinc-200 dark:border-zinc-700 hover:scale-105 active:scale-95 transition-all">
-                <svg class="w-5 h-5 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
-                    <circle cx="12" cy="12" r="3" stroke-width="2"></circle>
+            <button id="settingsBtn" class="p-3 rounded-2xl bg-white dark:bg-zinc-800 shadow-sm border border-zinc-200 dark:border-zinc-700 hover:scale-105 active:scale-95 transition-all flex items-center justify-center">
+                <svg class="w-5 h-5 text-zinc-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
                 </svg>
             </button>
         </div>
@@ -100,11 +100,6 @@
 
     <main id="appContainer" class="flex-1 flex flex-col items-center justify-center w-full max-w-2xl mx-auto px-6 relative">
         <div class="relative w-full max-w-[320px] aspect-square flex items-center justify-center mb-12">
-            <!-- Encouragement Text at Top -->
-            <div class="absolute top-[-40px] left-0 w-full text-center pointer-events-none">
-                <span id="guidanceLabel" class="text-[11px] font-extrabold uppercase tracking-[0.2em] opacity-60">Focus on your high-value tasks.</span>
-            </div>
-
             <svg class="timer-svg w-full h-full" viewBox="0 0 100 100">
                 <circle cx="50" cy="50" r="45" stroke="currentColor" stroke-width="1.5" fill="none" class="opacity-10"></circle>
                 <circle id="progress" cx="50" cy="50" r="45" stroke="currentColor" stroke-width="4.5" fill="none" class="text-accent progress-ring" stroke-dasharray="283" stroke-dashoffset="0"></circle>
@@ -119,7 +114,12 @@
         </div>
 
         <div class="relative w-full flex flex-col items-center">
-            <div class="controls-layer flex flex-col items-center gap-12 z-10 w-full">
+            <div class="controls-layer flex flex-col items-center gap-8 z-10 w-full">
+                <!-- Guidance label moved here -->
+                <div id="guidanceContainer" class="text-center h-4 flex items-center justify-center">
+                    <span id="guidanceLabel" class="text-[11px] font-extrabold uppercase tracking-[0.2em] opacity-60">Focus on your high-value tasks.</span>
+                </div>
+
                 <div class="flex items-center gap-8">
                     <button id="resetBtn" class="text-[10px] font-bold uppercase tracking-widest opacity-30 hover:opacity-100 transition-opacity p-2">Reset</button>
                     <button id="startBtn" class="h-16 px-10 rounded-full bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 font-bold text-sm uppercase tracking-widest shadow-xl hover:scale-105 active:scale-95 transition-all">Start Session</button>
@@ -298,26 +298,36 @@
             const alarm = document.getElementById('alarmSound');
             alarm.volume = state.volume;
             alarm.currentTime = 0;
+            
+            // Loop only for Deep Work (requires manual stop)
+            // Single play for Recovery (auto switch back to Work)
             alarm.loop = state.isWork; 
             alarm.play().catch(e => console.log("Playback blocked"));
 
             if (state.isAmbientPlaying) toggleBrownNoise();
 
-            const startBtn = document.getElementById('startBtn');
-            startBtn.textContent = 'Stop Alarm';
-            startBtn.className = "h-16 px-10 rounded-full bg-red-500 text-white font-bold text-sm uppercase tracking-widest shadow-xl animate-pulse transition-all";
-            
-            document.body.classList.add('unlocked-temp');
-            if (Notification.permission === "granted") new Notification(state.isWork ? "Focus Complete" : "Break Over");
-
             if (state.isWork) {
+                // Manual Stop mode for Deep Work
+                const startBtn = document.getElementById('startBtn');
+                startBtn.textContent = 'Stop Alarm';
+                startBtn.className = "h-16 px-10 rounded-full bg-red-500 text-white font-bold text-sm uppercase tracking-widest shadow-xl animate-pulse transition-all";
+                
                 const today = new Date().toISOString().split('T')[0];
                 state.stats[today] = (state.stats[today] || 0) + 1;
                 setSaved('studioStats', JSON.stringify(state.stats));
                 initDots();
+                
+                document.body.classList.add('unlocked-temp');
             } else {
-                alarm.onended = () => { if (!alarm.loop && state.isAlarmRinging) stopAlarmAndProceed(); };
+                // Auto switch back to Work after chime for Recovery
+                alarm.onended = () => {
+                    if (state.isAlarmRinging) {
+                        stopAlarmAndProceed();
+                    }
+                };
             }
+
+            if (Notification.permission === "granted") new Notification(state.isWork ? "Focus Complete" : "Break Over");
         }
 
         function stopAlarmAndProceed() {
@@ -330,8 +340,10 @@
             startBtn.className = "h-16 px-10 rounded-full bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 font-bold text-sm uppercase tracking-widest shadow-xl hover:scale-105 active:scale-95 transition-all";
             
             if (state.isWork) {
+                // Finished Work -> Switch to Recovery and AUTO START
                 switchMode(true); 
             } else {
+                // Finished Recovery -> Switch to Work and WAIT (MANUAL START)
                 switchMode(false); 
             }
         }
@@ -342,11 +354,13 @@
             state.totalTime = state.timeLeft;
             
             if (!state.isWork) {
+                // Entering Recovery
                 lockControls();
                 if (autoStart) {
                     setTimeout(() => startTimer(), 1000);
                 }
             } else {
+                // Entering Deep Work
                 document.body.classList.remove('soft-lockdown', 'unlocked-temp');
                 hideUnlockSlider();
                 document.getElementById('startBtn').textContent = 'Start Session';
