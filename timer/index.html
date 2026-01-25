@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Manond Type Timer</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.3.0/marked.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&family=Noto+Sans+Thai:wght@400;600;700&display=swap" rel="stylesheet">
     <script>
         tailwind.config = {
@@ -68,11 +69,15 @@
             50% { background-position: 100% 50%; }
             100% { background-position: 0% 50%; }
         }
+
+        /* Markdown Styles */
+        .prose strong { color: #FF5C00; font-weight: 800; }
+        .prose ul { list-style-type: disc; padding-left: 1.25rem; margin-bottom: 1rem; }
+        .prose p { margin-bottom: 0.75rem; }
     </style>
 </head>
 <body class="bg-bg-light dark:bg-bg-dark text-zinc-900 dark:text-zinc-100 h-screen flex flex-col overflow-hidden selection:bg-accent selection:text-white">
 
-    <!-- Header with increased padding for mobile comfort -->
     <header class="absolute top-0 left-0 w-full p-8 md:p-10 flex justify-between items-start z-40">
         <div class="flex flex-col">
             <h1 class="font-extrabold tracking-tight text-xl leading-[0.9]">
@@ -148,7 +153,7 @@
     </main>
 
     <footer class="absolute bottom-6 left-6 z-40">
-        <span id="versionLabel" class="text-[10px] font-extrabold uppercase tracking-[0.2em] opacity-40 transition-opacity">v.2026.1.25.d</span>
+        <span id="versionLabel" class="text-[10px] font-extrabold uppercase tracking-[0.2em] opacity-40 transition-opacity">v.2026.1.25.e</span>
     </footer>
 
     <!-- Gemini AI Response Modal -->
@@ -158,7 +163,7 @@
                 <h3 id="aiTitle" class="text-xl font-bold tracking-tight">✨ Focus Intelligence</h3>
                 <button class="close-modal opacity-40 hover:opacity-100"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
             </div>
-            <div id="aiContent" class="flex-1 overflow-y-auto px-8 py-4 no-scrollbar text-sm leading-relaxed opacity-80 whitespace-pre-wrap">
+            <div id="aiContent" class="flex-1 overflow-y-auto px-8 py-4 no-scrollbar prose dark:prose-invert prose-zinc text-sm leading-relaxed opacity-80 whitespace-normal">
                 Generating your protocol...
             </div>
             <div class="p-8 pt-4">
@@ -222,10 +227,27 @@
                     </div>
                 </div>
 
-                <div class="space-y-2">
-                    <div class="flex justify-between"><label id="soundLabLabel" class="text-[10px] font-bold uppercase tracking-widest opacity-50">Sound Lab</label><span id="volPercent" class="text-[10px] font-bold opacity-50">50%</span></div>
-                    <div class="bg-zinc-50 dark:bg-zinc-900 p-4 rounded-2xl border border-zinc-200 dark:border-zinc-700 space-y-4">
-                        <input type="range" id="volumeSlider" min="0" max="1" step="0.05" class="w-full">
+                <!-- Sound Controls -->
+                <div class="space-y-4">
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-center">
+                            <label class="text-[10px] font-bold uppercase tracking-widest opacity-50">Focus Audio Volume</label>
+                            <span id="ambientVolLabel" class="text-[10px] font-bold opacity-50">50%</span>
+                        </div>
+                        <div class="bg-zinc-50 dark:bg-zinc-900 p-4 rounded-2xl border border-zinc-200 dark:border-zinc-700">
+                            <input type="range" id="ambientVolume" min="0" max="1" step="0.05" class="w-full">
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-center">
+                            <label class="text-[10px] font-bold uppercase tracking-widest opacity-50">Alarm Volume</label>
+                            <span id="alarmVolLabel" class="text-[10px] font-bold opacity-50">50%</span>
+                        </div>
+                        <div class="bg-zinc-50 dark:bg-zinc-900 p-4 rounded-2xl border border-zinc-200 dark:border-zinc-700 flex gap-4 items-center">
+                            <input type="range" id="alarmVolume" min="0" max="1" step="0.05" class="flex-1">
+                            <button id="testAlarmBtn" class="px-4 py-2 rounded-xl bg-zinc-200 dark:bg-zinc-800 text-[10px] font-bold uppercase tracking-widest">Test</button>
+                        </div>
                     </div>
                 </div>
 
@@ -247,11 +269,11 @@
                 <h3 id="statsTitle" class="text-3xl font-bold tracking-tight leading-tight">Weekly<br>Analytics</h3>
                 <div class="flex gap-8">
                     <div class="text-right">
-                        <span id="todayHours" class="text-3xl font-extrabold text-zinc-400 tracking-tighter">0h 00m</span>
+                        <span id="todayHours" class="text-3xl font-extrabold text-zinc-400 tracking-tighter tabular-nums">0h 00m</span>
                         <p id="todayLabel" class="text-[10px] font-bold uppercase tracking-widest opacity-40">Today</p>
                     </div>
                     <div class="text-right">
-                        <span id="totalHours" class="text-3xl font-extrabold text-accent tracking-tighter">0h 00m</span>
+                        <span id="totalHours" class="text-3xl font-extrabold text-accent tracking-tighter tabular-nums">0h 00m</span>
                         <p id="weeklyLabel" class="text-[10px] font-bold uppercase tracking-widest opacity-40">Weekly</p>
                     </div>
                 </div>
@@ -383,7 +405,9 @@
             theme: getSaved('theme', 'system'),
             lang: getSaved('lang', 'en'),
             stats: JSON.parse(getSaved('studioStats', '{}')),
-            volume: parseFloat(getSaved('volume', 0.5)),
+            timeHistory: JSON.parse(getSaved('timeHistory', '{}')), // { date: secondsAccrued }
+            ambientVol: parseFloat(getSaved('ambientVol', 0.5)),
+            alarmVol: parseFloat(getSaved('alarmVol', 0.8)),
             userApiKey: getSaved('geminiApiKey', ''),
             timeLeft: 0, totalTime: 0, timerId: null, isWork: true, isAmbientPlaying: false,
             isAlarmRinging: false
@@ -392,13 +416,6 @@
         state.totalTime = state.workTime;
 
         let audioCtx, brownNoiseNode, gainNode, unlockTimer = null;
-
-        /**
-         * Simple markdown helper to convert **text** to <strong>text</strong>
-         */
-        function parseMarkdown(text) {
-            return text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-        }
 
         function updateTexts() {
             const t = translations[state.lang];
@@ -420,7 +437,6 @@
             document.getElementById('workDurationLabel').textContent = t.work;
             document.getElementById('breakDurationLabel').textContent = t.break;
             document.getElementById('goalCountLabel').textContent = t.goal;
-            document.getElementById('soundLabLabel').textContent = t.soundLab;
             document.getElementById('advancedLabel').textContent = t.advanced;
             document.getElementById('factoryResetBtn').textContent = t.clearData;
             document.getElementById('saveSettings').textContent = t.saveChanges;
@@ -466,13 +482,13 @@
             const t = translations[state.lang];
             openModal('aiModal'); 
             document.getElementById('aiTitle').innerText = t.aiProtocolTitle;
-            document.getElementById('aiContent').innerText = t.aiLoading;
+            document.getElementById('aiContent').innerHTML = `<div class='animate-pulse'>${t.aiLoading}</div>`;
             
-            const prompt = `I am currently starting a ${state.workTime / 60} minute deep work session. My daily goal is ${state.dailyGoal} sessions. Suggest a short 3-point protocol for maximum focus. Use **text** for important parts.`;
-            const systemPrompt = `You are a productivity expert. Respond ONLY in ${state.lang === 'th' ? 'Thai' : 'English'}. Keep it concise and professional.`;
+            const prompt = `Suggest a short focused protocol for a ${state.workTime / 60} minute deep work session. Use rich markdown with headers, bold text, and lists.`;
+            const systemPrompt = `You are a productivity coach. Respond ONLY in ${state.lang === 'th' ? 'Thai' : 'English'}. Keep it motivating.`;
             
             const result = await callGemini(prompt, systemPrompt);
-            document.getElementById('aiContent').innerHTML = parseMarkdown(result);
+            document.getElementById('aiContent').innerHTML = marked.parse(result);
         }
 
         async function generatePerformanceReview() {
@@ -487,14 +503,14 @@
             closeModal('statsModal');
             openModal('aiModal'); 
             document.getElementById('aiTitle').innerText = t.aiInsightsTitle;
-            document.getElementById('aiContent').innerText = t.aiLoadingInsights;
+            document.getElementById('aiContent').innerHTML = `<div class='animate-pulse'>${t.aiLoadingInsights}</div>`;
             
-            const history = Object.entries(state.stats).slice(-7).map(([date, count]) => `${date}: ${count} sessions`).join(', ');
-            const prompt = `Weekly history: ${history || 'No data yet'}. Goal: ${state.dailyGoal} sessions per day. Analyze trends and give a motivation boost. Use **text** for bold highlights.`;
-            const systemPrompt = `You are a performance psychologist. Respond ONLY in ${state.lang === 'th' ? 'Thai' : 'English'}. Provide a brief 2-3 sentence analysis.`;
+            const history = Object.entries(state.timeHistory).slice(-7).map(([date, sec]) => `${date}: ${Math.floor(sec/60)} mins`).join(', ');
+            const prompt = `Performance history: ${history || 'No data yet'}. Goal: ${state.dailyGoal} sessions. Provide a performance review in Markdown.`;
+            const systemPrompt = `You are a data analyst and coach. Respond ONLY in ${state.lang === 'th' ? 'Thai' : 'English'}.`;
             
             const result = await callGemini(prompt, systemPrompt);
-            document.getElementById('aiContent').innerHTML = parseMarkdown(result);
+            document.getElementById('aiContent').innerHTML = marked.parse(result);
         }
 
         function updateDisplay() {
@@ -517,6 +533,11 @@
             } else {
                 startBtn.textContent = state.timeLeft === (state.isWork ? state.workTime : state.breakTime) ? t.startSession : t.resume;
             }
+
+            // Real-time update for Analytics if modal is open
+            if (!document.getElementById('statsModal').classList.contains('hidden')) {
+                renderStats();
+            }
         }
 
         function initDots() {
@@ -535,7 +556,7 @@
             clearInterval(state.timerId);
             state.timerId = null;
             const alarm = document.getElementById('alarmSound');
-            alarm.volume = state.volume;
+            alarm.volume = state.alarmVol;
             alarm.currentTime = 0;
             if (state.isAmbientPlaying) toggleBrownNoise();
 
@@ -592,6 +613,14 @@
             if (state.timerId) return;
             state.timerId = setInterval(() => {
                 state.timeLeft--;
+                
+                // Track deep work time for analytics in real-time
+                if (state.isWork) {
+                    const today = new Date().toISOString().split('T')[0];
+                    state.timeHistory[today] = (state.timeHistory[today] || 0) + 1;
+                    setSaved('timeHistory', JSON.stringify(state.timeHistory));
+                }
+
                 updateDisplay();
                 if (state.timeLeft <= 0) triggerAlarm();
             }, 1000);
@@ -631,25 +660,29 @@
             container.innerHTML = ''; labels.innerHTML = '';
             const days = state.lang === 'th' ? ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'] : ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
             const curr = new Date();
-            let totalSessions = 0, todaySessions = 0;
+            let weeklySeconds = 0, todaySeconds = 0;
             const todayStr = curr.toISOString().split('T')[0];
+            
             for(let i=6; i>=0; i--) {
                 const d = new Date(); d.setDate(curr.getDate() - i);
                 const ds = d.toISOString().split('T')[0];
-                const count = state.stats[ds] || 0;
-                totalSessions += count;
-                if(ds === todayStr) todaySessions = count;
-                const h = Math.min((count / state.dailyGoal) * 100, 100);
-                container.innerHTML += `<div class="flex-1 flex flex-col justify-end h-full"><div class="bar w-full ${count >= state.dailyGoal ? 'bg-accent' : 'bg-zinc-200 dark:bg-zinc-700'}" style="height: ${h || 2}%"></div></div>`;
+                const seconds = state.timeHistory[ds] || 0;
+                weeklySeconds += seconds;
+                if(ds === todayStr) todaySeconds = seconds;
+                
+                // Calculate height based on 4 hours goal (14400 sec)
+                const h = Math.min((seconds / 14400) * 100, 100);
+                container.innerHTML += `<div class="flex-1 flex flex-col justify-end h-full"><div class="bar w-full ${seconds >= 14400 ? 'bg-accent' : 'bg-zinc-200 dark:bg-zinc-700'}" style="height: ${Math.max(h, 2)}%"></div></div>`;
                 labels.innerHTML += `<div class="flex-1 text-center text-[10px] font-bold opacity-30">${days[d.getDay()]}</div>`;
             }
-            document.getElementById('totalHours').textContent = formatDuration(totalSessions * state.workTime);
-            document.getElementById('todayHours').textContent = formatDuration(todaySessions * state.workTime);
+            
+            document.getElementById('totalHours').textContent = formatDuration(weeklySeconds);
+            document.getElementById('todayHours').textContent = formatDuration(todaySeconds);
         }
 
         function toggleBrownNoise() {
             const AudioContext = window.AudioContext || window.webkitAudioContext;
-            if (!audioCtx) { audioCtx = new AudioContext(); gainNode = audioCtx.createGain(); gainNode.gain.value = state.volume; gainNode.connect(audioCtx.destination); }
+            if (!audioCtx) { audioCtx = new AudioContext(); gainNode = audioCtx.createGain(); gainNode.gain.value = state.ambientVol; gainNode.connect(audioCtx.destination); }
             if (!state.isAmbientPlaying) {
                 brownNoiseNode = audioCtx.createScriptProcessor(4096, 1, 1);
                 brownNoiseNode.onaudioprocess = (e) => {
@@ -658,6 +691,7 @@
                 };
                 brownNoiseNode.connect(gainNode); state.isAmbientPlaying = true;
                 document.getElementById('ambientToggle').classList.add('active');
+                if (audioCtx.state === 'suspended') audioCtx.resume();
             } else { if (brownNoiseNode) brownNoiseNode.disconnect(); state.isAmbientPlaying = false; document.getElementById('ambientToggle').classList.remove('active'); }
         }
 
@@ -767,6 +801,10 @@
             document.getElementById('breakInput').value = state.breakTime / 60;
             document.getElementById('goalInput').value = state.dailyGoal;
             document.getElementById('apiKeyInput').value = state.userApiKey;
+            document.getElementById('ambientVolume').value = state.ambientVol;
+            document.getElementById('alarmVolume').value = state.alarmVol;
+            document.getElementById('ambientVolLabel').textContent = `${Math.round(state.ambientVol * 100)}%`;
+            document.getElementById('alarmVolLabel').textContent = `${Math.round(state.alarmVol * 100)}%`;
             openModal('settingsModal');
         });
 
@@ -775,10 +813,16 @@
             state.breakTime = document.getElementById('breakInput').value * 60;
             state.dailyGoal = parseInt(document.getElementById('goalInput').value) || 8;
             state.userApiKey = document.getElementById('apiKeyInput').value.trim();
+            state.ambientVol = parseFloat(document.getElementById('ambientVolume').value);
+            state.alarmVol = parseFloat(document.getElementById('alarmVolume').value);
+            
             setSaved('workTime', document.getElementById('workInput').value);
             setSaved('breakTime', document.getElementById('breakInput').value);
             setSaved('dailyGoal', state.dailyGoal);
             setSaved('geminiApiKey', state.userApiKey);
+            setSaved('ambientVol', state.ambientVol);
+            setSaved('alarmVol', state.alarmVol);
+            
             if (!state.timerId) { state.timeLeft = state.isWork ? state.workTime : state.breakTime; state.totalTime = state.timeLeft; updateDisplay(); }
             initDots(); closeModal('settingsModal');
         });
@@ -788,10 +832,22 @@
         document.querySelectorAll('.theme-opt').forEach(b => b.addEventListener('click', () => setTheme(b.dataset.theme)));
         document.querySelectorAll('.lang-opt').forEach(b => b.addEventListener('click', () => setLang(b.dataset.lang)));
         
-        document.getElementById('volumeSlider').addEventListener('input', e => {
-            state.volume = e.target.value; setSaved('volume', state.volume);
-            document.getElementById('volPercent').textContent = `${Math.round(state.volume * 100)}%`;
-            if (gainNode) gainNode.gain.value = state.volume;
+        document.getElementById('ambientVolume').addEventListener('input', e => {
+            state.ambientVol = e.target.value;
+            document.getElementById('ambientVolLabel').textContent = `${Math.round(state.ambientVol * 100)}%`;
+            if (gainNode) gainNode.gain.value = state.ambientVol;
+        });
+
+        document.getElementById('alarmVolume').addEventListener('input', e => {
+            state.alarmVol = e.target.value;
+            document.getElementById('alarmVolLabel').textContent = `${Math.round(state.alarmVol * 100)}%`;
+        });
+
+        document.getElementById('testAlarmBtn').addEventListener('click', () => {
+            const alarm = document.getElementById('alarmSound');
+            alarm.volume = state.alarmVol;
+            alarm.currentTime = 0;
+            alarm.play();
         });
 
         document.getElementById('factoryResetBtn').addEventListener('click', () => openModal('confirmModal'));
@@ -800,8 +856,6 @@
         setTheme(state.theme);
         setLang(state.lang);
         initDots();
-        document.getElementById('volumeSlider').value = state.volume;
-        document.getElementById('volPercent').textContent = `${Math.round(state.volume * 100)}%`;
     </script>
 </body>
 </html>
