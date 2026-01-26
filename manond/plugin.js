@@ -1,27 +1,45 @@
-(function() {
-  window.start = function(editorController, pluginPath) {
-    const tagName = "manond-touch-panel";
-    
-    if (!customElements.get(tagName)) {
-      customElements.define(tagName, class extends HTMLElement {
-        connectedCallback() {
-          this.style.display = "block";
-          this.innerHTML = `
-            <div style="padding: 15px; font-family: system-ui, sans-serif; font-size: 12px; color: #888; border-left: 3px solid #007aff;">
-              <b style="color: #eee; display: block; margin-bottom: 4px;">TOUCH KIT ACTIVE</b>
-              <span style="opacity: 0.7;">Logic integrated in plugin.js</span>
-            </div>
-          `;
-        }
-      });
-    }
+/**
+ * Manond Touch Kit (Combined)
+ * Contains both the loader and the touch logic.
+ */
 
-    const panel = document.createElement(tagName);
-    panel.title = "Manond Touch Kit";
-    if (pluginPath) panel.iconPath = pluginPath + "/icon.svg";
-    editorController.addSidebarPanel(panel, "right");
+export function start(editorController, pluginPath) {
+  const tagName = "manond-touch-panel";
+  
+  // 1. Define the UI Panel
+  if (!customElements.get(tagName)) {
+    customElements.define(tagName, class extends HTMLElement {
+      connectedCallback() {
+        this.style.display = "block";
+        this.innerHTML = `
+          <div style="padding: 15px; font-family: system-ui, sans-serif; font-size: 12px; color: #888; border-left: 3px solid #007aff;">
+            <b style="color: #eee; display: block; margin-bottom: 4px;">TOUCH KIT ACTIVE</b>
+            <span style="opacity: 0.7;">Running locally...</span>
+          </div>
+        `;
+      }
+    });
+  }
 
-    // --- INTEGRATED TK.JS LOGIC ---
+  // 2. Add to Sidebar
+  const panel = document.createElement(tagName);
+  panel.title = "Manond Touch Kit";
+  // We use the pluginPath provided by Fontra to find the icon
+  panel.iconPath = `${pluginPath}/icon.svg`;
+  editorController.addSidebarPanel(panel, "right");
+
+  // 3. Initialize Touch Logic Immediately
+  initTouchLogic();
+}
+
+/**
+ * The Core Touch Kit Logic
+ * (Formerly tk.js)
+ */
+function initTouchLogic() {
+    if (document.querySelector('.manond-ui')) return;
+    console.log("Manond: Initializing Touch Logic...");
+
     let modifiers = { Shift: false, Control: false, Alt: false, Space: false };
 
     const ICONS = {
@@ -97,5 +115,4 @@
     window.addEventListener('pointerup', e => { 
         if (e.target.tagName === 'CANVAS' && !e.target.closest('.manond-ui')) bridge('mouseup', e); 
     }, true);
-  };
-})();
+}
