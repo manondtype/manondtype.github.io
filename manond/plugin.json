@@ -1,7 +1,0 @@
-{
-  "name": "Manond Touch Kit",
-  "init": "plugin.js",
-  "function": "start",
-  "description": "Touch Kit"
-
-}
