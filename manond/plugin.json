@@ -1,6 +1,7 @@
 {
   "name": "Manond Touch Kit",
-  "init": "./plugin.js",
+  "init": "plugin.js",
   "function": "start",
-  "description": "Touch Kit for Fontra - Geometric Icons & Screen Clamping"
+  "description": "Touch Kit"
+
 }
