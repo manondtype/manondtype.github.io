@@ -1,48 +1,52 @@
-import Panel from "fontra/editor/panel.js";
-import { div } from "fontra/core/html-utils.js";
-
 /**
- * ManondTouchPanel wraps the logic from your Touch Kit into a Fontra Sidebar Panel.
+ * Manond Touch Kit - fontra-pak Optimized Version
+ * We avoid 'import' from internal paths to prevent "Module not found" errors in production.
  */
-class ManondTouchPanel extends Panel {
-  constructor(editorController) {
-    super(editorController);
+
+class ManondTouchPanel extends HTMLElement {
+  constructor() {
+    super();
+    // Fontra passes editorController to the element when it instantiates it
+    this.editorController = null;
     this.title = "Manond Touch Kit";
-    this.isEmulating = true;
-    this.modifiers = { Shift: false, Control: false, Alt: false, Space: false };
-    
-    // Track initialization state
     this._hasInitted = false;
+    this.modifiers = { Shift: false, Control: false, Alt: false, Space: false };
   }
 
-  // Fallback icon for the sidebar tab
-  get icon() {
-    return `
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <rect x="3" y="3" width="18" height="18" rx="4"/>
-        <circle cx="12" cy="12" r="3" fill="currentColor"/>
-      </svg>
-    `;
+  // This runs when Fontra adds the panel to the sidebar
+  connectedCallback() {
+    this.render();
   }
 
   render() {
-    // Inject the touch kit UI elements once the panel is rendered
+    this.innerHTML = `
+      <div style="padding: 16px; font-family: system-ui, sans-serif; display: flex; flex-direction: column; gap: 12px;">
+        <div style="font-weight: bold; color: #007aff; font-size: 11px; letter-spacing: 1px;">MANOND TOUCH KIT</div>
+        <p style="margin: 0; font-size: 12px; color: #888; line-height: 1.4;">
+          If the touch overlay at the bottom is missing, click the button below to force start it.
+        </p>
+        <button id="force-start-touch" style="
+          padding: 8px 12px; 
+          background: #333; 
+          color: white; 
+          border: 1px solid #444; 
+          border-radius: 6px; 
+          cursor: pointer;
+          font-size: 12px;
+        ">Force Start Overlay</button>
+      </div>
+    `;
+
+    this.querySelector('#force-start-touch').onclick = () => this.initTouchKit();
+
+    // Automatic attempt
     if (!this._hasInitted) {
       this._hasInitted = true;
-      requestAnimationFrame(() => this.initTouchKit());
+      setTimeout(() => this.initTouchKit(), 500);
     }
-
-    return div({ 
-        class: "manond-touch-container", 
-        style: "padding: 15px; font-family: sans-serif; font-size: 13px; color: #888;" 
-    }, [
-      div({ style: "font-weight: bold; color: #ccc; margin-bottom: 5px;" }, ["TOUCH KIT ACTIVE"]),
-      div({}, ["Touch controls are active at the bottom of the viewport."])
-    ]);
   }
 
   initTouchKit() {
-    // Ensure we don't double-inject the UI on hot reloads
     if (document.querySelector('.manond-ui')) return;
 
     const ICONS = {
@@ -53,8 +57,8 @@ class ManondTouchPanel extends Panel {
 
     const style = document.createElement('style');
     style.textContent = `
-        .manond-ui { position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%); display: flex; gap: 10px; z-index: 100000; padding: 12px; background: #111; border: 1px solid #333; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.8); pointer-events: auto; }
-        .manond-btn { width: 50px; height: 50px; border-radius: 12px; border: none; background: #222; color: #888; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.2s; }
+        .manond-ui { position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%); display: flex; gap: 10px; z-index: 999999; padding: 12px; background: #111; border: 1px solid #333; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.8); }
+        .manond-btn { width: 50px; height: 50px; border-radius: 12px; border: none; background: #222; color: #888; display: flex; align-items: center; justify-content: center; cursor: pointer; }
         .manond-btn.active { background: #007aff; color: white; }
         .manond-btn svg { width: 24px; height: 24px; pointer-events: none; }
     `;
@@ -66,13 +70,8 @@ class ManondTouchPanel extends Panel {
     const createBtn = (id, icon, onClick) => {
         const btn = document.createElement('button');
         btn.className = 'manond-btn';
-        btn.id = `manond-${id}`;
         btn.innerHTML = icon;
-        btn.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            onClick(btn);
-        });
+        btn.onclick = (e) => { e.preventDefault(); e.stopPropagation(); onClick(btn); };
         ui.appendChild(btn);
     };
 
@@ -91,7 +90,6 @@ class ManondTouchPanel extends Panel {
 
     document.body.appendChild(ui);
 
-    // Event bridging to the Fontra Canvas
     const bridge = (type, e) => {
         const canvas = document.querySelector('canvas');
         if (!canvas) return;
@@ -102,30 +100,38 @@ class ManondTouchPanel extends Panel {
         }));
     };
 
-    const handlePointer = e => {
+    window.addEventListener('pointerdown', e => {
         if (e.target.tagName === 'CANVAS') {
-            if (e.type === 'pointerdown') e.stopPropagation();
-            const mouseType = e.type.replace('pointer', 'mouse');
-            bridge(mouseType, e);
+            e.stopPropagation();
+            bridge('mousedown', e);
         }
-    };
-
-    window.addEventListener('pointerdown', handlePointer, true);
-    window.addEventListener('pointermove', handlePointer, true);
-    window.addEventListener('pointerup', handlePointer, true);
+    }, true);
+    window.addEventListener('pointermove', e => {
+        if (e.target.tagName === 'CANVAS') bridge('mousemove', e);
+    }, true);
+    window.addEventListener('pointerup', e => {
+        if (e.target.tagName === 'CANVAS') bridge('mouseup', e);
+    }, true);
   }
 }
 
+/**
+ * Global Start Function
+ */
 export function start(editorController, pluginPath) {
   const tagName = "manond-touch-panel";
-  
-  // Attach the icon path
-  ManondTouchPanel.prototype.iconPath = `${pluginPath}/icon.svg`;
 
   if (!customElements.get(tagName)) {
     customElements.define(tagName, ManondTouchPanel);
   }
   
-  // Register the panel in the right sidebar
-  editorController.addSidebarPanel(new ManondTouchPanel(editorController), "right");
+  // Create instance and manually set the icon for Fontra's sidebar
+  const panel = document.createElement(tagName);
+  panel.editorController = editorController;
+  
+  // We use a property that Fontra looks for to find the icon
+  panel.iconPath = `${pluginPath}/icon.svg`;
+
+  // Add the panel to the sidebar
+  editorController.addSidebarPanel(panel, "right");
 }
