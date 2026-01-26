@@ -7,7 +7,7 @@ export function start(editorController, pluginPath) {
         this.innerHTML = `
           <div style="padding: 15px; font-family: system-ui, sans-serif; font-size: 12px; color: #888; border-left: 3px solid #007aff;">
             <b style="color: #eee; display: block; margin-bottom: 4px;">TOUCH KIT ACTIVE</b>
-            <span style="opacity: 0.7;">Loading tk.js from GitHub...</span>
+            <span style="opacity: 0.7;">Loading tk.js...</span>
           </div>
         `;
       }
@@ -24,8 +24,8 @@ export function start(editorController, pluginPath) {
   if (!document.getElementById(scriptId)) {
     const script = document.createElement('script');
     script.id = scriptId;
-    script.src = `${pluginPath}/tk.js`;
-    script.type = "text/javascript"; 
+    script.src = pluginPath + "/tk.js";
+    script.async = true;
     document.head.appendChild(script);
   }
 }
