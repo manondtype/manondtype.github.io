@@ -16,7 +16,7 @@ export function start(editorController, pluginPath) {
 
   const panel = document.createElement(tagName);
   panel.title = "Manond Touch Kit";
-  panel.iconPath = `${pluginPath}/icon.svg`;
+  panel.iconPath = pluginPath + "/icon.svg";
   
   editorController.addSidebarPanel(panel, "right");
 
