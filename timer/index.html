@@ -3,7 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#09090B">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Manond Type Timer</title>
+    <!-- Manifest for PWA -->
+    <link rel="manifest" href="data:application/manifest+json;base64,ewogICJuYW1lIjogIk1hbm9uZCBUeXBlIFRpbWVyIiwKICAic2hvcnRfbmFtZSI6ICJNYW5vbmQiLAogICJzdGFydF91cmwiOiAiLiIsCiAgImRpc3BsYXkiOiAic3RhbmRhbG9uZSIsCiAgImJhY2tncm91bmRfY29sb3IiOiAiIzA5MDkwQiIsCiAgInRoZW1lX2NvbG9yIjogIiNGRjVDMDAiLAogICJpY29ucyI6IFsKICAgIHsKICAgICAgInNyYyI6ICJodHRwczovL2Nkbi1pY29ucy1wbmcuZnJlZXBpay5jb20vNTEyLzk0MjIvOTQyMjUyMS5wbmciLAogICAgICAic2l6ZXMiOiAiNTEyeDUxMiIsCiAgICAgICJ0eXBlIjogImltYWdlL3BuZyIKICAgIH0KICBdCn0=">
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.3.0/marked.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&family=Noto+Sans+Thai:wght@400;600;700&display=swap" rel="stylesheet">
@@ -36,12 +42,11 @@
         
         [lang="th"] { font-size: 1.05em; line-height: 1.6; }
         .timer-svg { transform: rotate(-90deg); }
-        .progress-ring { transition: stroke-dashoffset 1s linear, stroke 0.5s ease; stroke-linecap: round; }
+        .progress-ring { transition: stroke-dashoffset 0.3s linear, stroke 0.5s ease; stroke-linecap: round; }
         .bar { transition: height 1s cubic-bezier(0.4, 0, 0.2, 1); min-height: 2px; border-radius: 4px 4px 0 0; }
         .modal-backdrop { background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); z-index: 50; }
         .dark .modal-backdrop { background: rgba(0, 0, 0, 0.4); }
         
-        /* Custom scrollbar for AI content */
         .ai-scrollbar::-webkit-scrollbar { width: 4px; }
         .ai-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .ai-scrollbar::-webkit-scrollbar-thumb { background: rgba(150, 150, 150, 0.2); border-radius: 10px; }
@@ -155,7 +160,7 @@
     </main>
 
     <footer class="absolute bottom-6 left-6 z-40">
-        <span id="versionLabel" class="text-[10px] font-extrabold uppercase tracking-[0.2em] opacity-40 transition-opacity">v.2026.1.26.f</span>
+        <span id="versionLabel" class="text-[10px] font-extrabold uppercase tracking-[0.2em] opacity-40 transition-opacity">v.2026.1.26.f.pwa</span>
     </footer>
 
     <!-- Gemini AI Response Modal -->
@@ -174,7 +179,7 @@
         </div>
     </div>
 
-    <!-- Modals -->
+    <!-- Settings Modal -->
     <div id="settingsModal" class="fixed inset-0 hidden flex items-center justify-center p-4 modal-backdrop opacity-0 transition-opacity duration-300">
         <div class="bg-surface-light dark:bg-surface-dark w-full max-w-md max-h-[90vh] rounded-[32px] shadow-2xl border border-zinc-200 dark:border-zinc-800 flex flex-col transform scale-95 transition-transform duration-300">
             <div class="flex justify-between items-center p-8 pb-4">
@@ -306,7 +311,33 @@
 
     <audio id="alarmSound" src="https://assets.mixkit.co/active_storage/sfx/951/951-preview.mp3"></audio>
 
+    <script id="worker-script" type="application/javascript">
+        // This is the source for our Web Worker to keep timer running in background
+        let intervalId = null;
+        self.onmessage = function(e) {
+            if (e.data === 'start') {
+                if (intervalId) clearInterval(intervalId);
+                intervalId = setInterval(() => self.postMessage('tick'), 1000);
+            } else if (e.data === 'stop') {
+                if (intervalId) clearInterval(intervalId);
+                intervalId = null;
+            }
+        };
+    </script>
+
     <script>
+        // PWA Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            const swCode = `
+                self.addEventListener('install', e => self.skipWaiting());
+                self.addEventListener('activate', e => e.waitUntil(clients.claim()));
+                self.addEventListener('fetch', e => e.respondWith(fetch(e.request).catch(() => caches.match(e.request))));
+            `;
+            const blob = new Blob([swCode], { type: 'application/javascript' });
+            const url = URL.createObjectURL(blob);
+            navigator.serviceWorker.register(url);
+        }
+
         const getSaved = (k, d) => localStorage.getItem(k) || d;
         const setSaved = (k, v) => localStorage.setItem(k, v);
 
@@ -410,13 +441,34 @@
             ambientVol: parseFloat(getSaved('ambientVol', 0.5)),
             alarmVol: parseFloat(getSaved('alarmVol', 0.8)),
             userApiKey: getSaved('geminiApiKey', ''),
-            timeLeft: 0, totalTime: 0, timerId: null, isWork: true, isAmbientPlaying: false,
+            timeLeft: 0, totalTime: 0, isRunning: false, isWork: true, isAmbientPlaying: false,
             isAlarmRinging: false
         };
         state.timeLeft = state.workTime;
         state.totalTime = state.workTime;
 
         let audioCtx, brownNoiseNode, gainNode, unlockTimer = null;
+        let timerWorker = null;
+
+        // Initialize Web Worker for Background Persistence
+        function initWorker() {
+            const blob = new Blob([document.getElementById('worker-script').textContent], { type: 'application/javascript' });
+            timerWorker = new Worker(URL.createObjectURL(blob));
+            timerWorker.onmessage = () => {
+                handleTick();
+            };
+        }
+
+        function handleTick() {
+            state.timeLeft--;
+            if (state.isWork) {
+                const today = new Date().toISOString().split('T')[0];
+                state.timeHistory[today] = (state.timeHistory[today] || 0) + 1;
+                setSaved('timeHistory', JSON.stringify(state.timeHistory));
+            }
+            updateDisplay();
+            if (state.timeLeft <= 0) triggerAlarm();
+        }
 
         function updateTexts() {
             const t = translations[state.lang];
@@ -458,7 +510,6 @@
             const apiKey = state.userApiKey;
             if (!apiKey) return state.lang === 'th' ? "กรุณาใส่ API KEY ในเมนูการตั้งค่า" : "API KEY MISSING: Please go to Settings.";
 
-            // Priority and Backup Models
             const models = [
                 "gemini-2.5-flash-preview-09-2025",
                 "gemini-2.5-flash-lite-preview-09-2025",
@@ -482,28 +533,16 @@
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify(payload)
                         });
-
                         const data = await response.json();
-
-                        if (data.candidates?.[0]?.content?.parts?.[0]?.text) {
-                            return data.candidates[0].content.parts[0].text;
-                        }
-
+                        if (data.candidates?.[0]?.content?.parts?.[0]?.text) return data.candidates[0].content.parts[0].text;
                         if (data.error) {
                             lastError = data.error.message;
-                            if (response.status === 404) break;
-                            if (response.status >= 400 && response.status < 500 && response.status !== 429) break;
+                            if (response.status === 404 || (response.status >= 400 && response.status < 500 && response.status !== 429)) break;
                         }
-                    } catch (err) {
-                        lastError = err.message;
-                    }
-
-                    if (i < retryDelays.length) {
-                        await new Promise(res => setTimeout(res, retryDelays[i]));
-                    }
+                    } catch (err) { lastError = err.message; }
+                    if (i < retryDelays.length) await new Promise(res => setTimeout(res, retryDelays[i]));
                 }
             }
-
             return state.lang === 'th' ? `เกิดข้อผิดพลาด AI: ${lastError}` : `AI ERROR: ${lastError || "Check key/internet."}`;
         }
 
@@ -513,10 +552,8 @@
             document.getElementById('aiTitle').innerText = t.aiProtocolTitle;
             document.getElementById('aiContent').innerHTML = `<div class='animate-pulse'>${t.aiLoading}</div>`;
             document.getElementById('aiContent').scrollTop = 0;
-            
             const prompt = `Suggest a short focused protocol for a ${state.workTime / 60} minute deep work session. Use rich markdown with headers, bold text, and lists. Focus on immediate clarity and environment.`;
             const systemPrompt = `You are a world-class productivity coach. Respond ONLY in ${state.lang === 'th' ? 'Thai' : 'English'}. Keep it motivating and actionable.`;
-            
             const result = await callGemini(prompt, systemPrompt);
             document.getElementById('aiContent').innerHTML = marked.parse(result);
         }
@@ -529,17 +566,14 @@
                 document.getElementById('aiContent').innerText = translations[state.lang].apiKeyNote; 
                 return; 
             }
-            
             closeModal('statsModal');
             openModal('aiModal'); 
             document.getElementById('aiTitle').innerText = t.aiInsightsTitle;
             document.getElementById('aiContent').innerHTML = `<div class='animate-pulse'>${t.aiLoadingInsights}</div>`;
             document.getElementById('aiContent').scrollTop = 0;
-            
             const history = Object.entries(state.timeHistory).slice(-7).map(([date, sec]) => `${date}: ${Math.floor(sec/60)} mins`).join(', ');
             const prompt = `Analyze this performance history: ${history || 'No data yet'}. Goal: ${state.dailyGoal} sessions/day. Provide a performance review in Markdown. Highlight strengths and one improvement.`;
             const systemPrompt = `You are a high-performance data analyst. Respond ONLY in ${state.lang === 'th' ? 'Thai' : 'English'}.`;
-            
             const result = await callGemini(prompt, systemPrompt);
             document.getElementById('aiContent').innerHTML = marked.parse(result);
         }
@@ -559,15 +593,13 @@
             const startBtn = document.getElementById('startBtn');
             if (state.isAlarmRinging) {
                 startBtn.textContent = t.stopAlarm;
-            } else if (state.timerId) {
+            } else if (state.isRunning) {
                 startBtn.textContent = t.pause;
             } else {
                 startBtn.textContent = state.timeLeft === (state.isWork ? state.workTime : state.breakTime) ? t.startSession : t.resume;
             }
 
-            if (!document.getElementById('statsModal').classList.contains('hidden')) {
-                renderStats();
-            }
+            if (!document.getElementById('statsModal').classList.contains('hidden')) renderStats();
         }
 
         function initDots() {
@@ -583,8 +615,7 @@
         }
 
         function triggerAlarm() {
-            clearInterval(state.timerId);
-            state.timerId = null;
+            stopTimer();
             const alarm = document.getElementById('alarmSound');
             alarm.volume = state.alarmVol;
             alarm.currentTime = 0;
@@ -640,17 +671,15 @@
         }
 
         function startTimer() {
-            if (state.timerId) return;
-            state.timerId = setInterval(() => {
-                state.timeLeft--;
-                if (state.isWork) {
-                    const today = new Date().toISOString().split('T')[0];
-                    state.timeHistory[today] = (state.timeHistory[today] || 0) + 1;
-                    setSaved('timeHistory', JSON.stringify(state.timeHistory));
-                }
-                updateDisplay();
-                if (state.timeLeft <= 0) triggerAlarm();
-            }, 1000);
+            if (state.isRunning) return;
+            state.isRunning = true;
+            timerWorker.postMessage('start');
+            updateDisplay();
+        }
+
+        function stopTimer() {
+            state.isRunning = false;
+            timerWorker.postMessage('stop');
             updateDisplay();
         }
 
@@ -696,12 +725,10 @@
                 const seconds = state.timeHistory[ds] || 0;
                 weeklySeconds += seconds;
                 if(ds === todayStr) todaySeconds = seconds;
-                
                 const h = Math.min((seconds / 14400) * 100, 100);
                 container.innerHTML += `<div class="flex-1 flex flex-col justify-end h-full"><div class="bar w-full ${seconds >= 14400 ? 'bg-accent' : 'bg-zinc-200 dark:bg-zinc-700'}" style="height: ${Math.max(h, 2)}%"></div></div>`;
                 labels.innerHTML += `<div class="flex-1 text-center text-[10px] font-bold opacity-30">${days[d.getDay()]}</div>`;
             }
-            
             document.getElementById('totalHours').textContent = formatDuration(weeklySeconds);
             document.getElementById('todayHours').textContent = formatDuration(todaySeconds);
         }
@@ -745,15 +772,11 @@
         function openModal(id) { 
             const m = document.getElementById(id); 
             m.classList.remove('hidden'); 
-            setTimeout(() => { 
-                m.classList.remove('opacity-0'); 
-                m.children[0].classList.remove('scale-95'); 
-            }, 10); 
+            setTimeout(() => { m.classList.remove('opacity-0'); m.children[0].classList.remove('scale-95'); }, 10); 
         }
         function closeModal(id) { 
             const m = document.getElementById(id); 
-            m.classList.add('opacity-0'); 
-            m.children[0].classList.add('scale-95'); 
+            m.classList.add('opacity-0'); m.children[0].classList.add('scale-95'); 
             setTimeout(() => m.classList.add('hidden'), 300); 
         }
 
@@ -792,13 +815,13 @@
         document.getElementById('aiInsightsBtn').addEventListener('click', generatePerformanceReview);
         document.getElementById('startBtn').addEventListener('click', () => {
             if (state.isAlarmRinging) stopAlarmAndProceed();
-            else if (state.timerId) { clearInterval(state.timerId); state.timerId = null; updateDisplay(); }
+            else if (state.isRunning) stopTimer();
             else startTimer();
         });
 
         document.getElementById('resetBtn').addEventListener('click', () => {
             document.getElementById('alarmSound').pause(); state.isAlarmRinging = false;
-            clearInterval(state.timerId); state.timerId = null;
+            stopTimer();
             state.timeLeft = state.isWork ? state.workTime : state.breakTime; updateDisplay();
             resetStartBtn();
         });
@@ -816,8 +839,10 @@
                     document.body.classList.remove('soft-lockdown', 'unlocked-temp');
                     hideUnlockSlider();
                 }
+                const wasRunning = state.isRunning;
+                if (wasRunning) stopTimer();
                 updateDisplay();
-                if (state.timerId) { clearInterval(state.timerId); state.timerId = null; startTimer(); }
+                if (wasRunning) startTimer();
             }
         });
         
@@ -841,15 +866,13 @@
             state.userApiKey = document.getElementById('apiKeyInput').value.trim();
             state.ambientVol = parseFloat(document.getElementById('ambientVolume').value);
             state.alarmVol = parseFloat(document.getElementById('alarmVolume').value);
-            
             setSaved('workTime', document.getElementById('workInput').value);
             setSaved('breakTime', document.getElementById('breakInput').value);
             setSaved('dailyGoal', state.dailyGoal);
             setSaved('geminiApiKey', state.userApiKey);
             setSaved('ambientVol', state.ambientVol);
             setSaved('alarmVol', state.alarmVol);
-            
-            if (!state.timerId) { state.timeLeft = state.isWork ? state.workTime : state.breakTime; state.totalTime = state.timeLeft; updateDisplay(); }
+            if (!state.isRunning) { state.timeLeft = state.isWork ? state.workTime : state.breakTime; state.totalTime = state.timeLeft; updateDisplay(); }
             initDots(); closeModal('settingsModal');
         });
 
@@ -863,22 +886,18 @@
             document.getElementById('ambientVolLabel').textContent = `${Math.round(state.ambientVol * 100)}%`;
             if (gainNode) gainNode.gain.value = state.ambientVol;
         });
-
         document.getElementById('alarmVolume').addEventListener('input', e => {
             state.alarmVol = e.target.value;
             document.getElementById('alarmVolLabel').textContent = `${Math.round(state.alarmVol * 100)}%`;
         });
-
         document.getElementById('testAlarmBtn').addEventListener('click', () => {
             const alarm = document.getElementById('alarmSound');
-            alarm.volume = state.alarmVol;
-            alarm.currentTime = 0;
-            alarm.play();
+            alarm.volume = state.alarmVol; alarm.currentTime = 0; alarm.play();
         });
-
         document.getElementById('factoryResetBtn').addEventListener('click', () => openModal('confirmModal'));
         document.getElementById('executeReset').addEventListener('click', () => { localStorage.clear(); window.location.reload(); });
 
+        initWorker();
         setTheme(state.theme);
         setLang(state.lang);
         initDots();
