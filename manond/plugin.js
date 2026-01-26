@@ -11,25 +11,24 @@ class ManondTouchPanel extends Panel {
     this.isEmulating = true;
     this.modifiers = { Shift: false, Control: false, Alt: false, Space: false };
     
-    // In Fontra, UI initialization should often happen after the first render
+    // Track initialization state
     this._hasInitted = false;
   }
 
-  // Fallback icon if SVG path fails
+  // The icon shown in the sidebar tab
   get icon() {
     return `
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <circle cx="12" cy="12" r="10"></circle>
-        <circle cx="12" cy="12" r="3"></circle>
+        <rect x="3" y="3" width="18" height="18" rx="4"/>
+        <circle cx="12" cy="12" r="3" fill="currentColor"/>
       </svg>
     `;
   }
 
   render() {
-    // Check if we need to start the touch kit logic
+    // Start touch kit logic if not already running
     if (!this._hasInitted) {
       this._hasInitted = true;
-      // Small delay ensures the DOM is ready
       setTimeout(() => this.initTouchKit(), 300);
     }
 
@@ -38,13 +37,14 @@ class ManondTouchPanel extends Panel {
         style: "padding: 15px; font-family: system-ui; font-size: 13px; color: #888;" 
     }, [
       div({ style: "font-weight: bold; color: var(--text-color, #ccc); margin-bottom: 5px;" }, ["TOUCH KIT ACTIVE"]),
-      div({}, ["Controls are visible at the bottom of the screen."])
+      div({}, ["Touch controls are active at the bottom of your viewport."])
     ]);
   }
 
   initTouchKit() {
-    // Prevent duplicate UIs
-    if (document.querySelector('.manond-ui')) return;
+    // Cleanup any existing UI from previous sessions/reloads
+    const existing = document.querySelector('.manond-ui');
+    if (existing) existing.remove();
 
     const ICONS = {
       pointer: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 2l13 12.5-5.5 1.5 4.5 7-3 2-4.5-7-3 3V2z"/></svg>`,
@@ -54,6 +54,7 @@ class ManondTouchPanel extends Panel {
     };
 
     const style = document.createElement('style');
+    style.className = 'manond-styles';
     style.textContent = `
         .manond-ui { position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%); display: flex; gap: 10px; z-index: 100000; padding: 12px; background: #111; border: 1px solid #333; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.8); pointer-events: auto; }
         .manond-btn { width: 50px; height: 50px; border-radius: 12px; border: none; background: #222; color: #888; display: flex; align-items: center; justify-content: center; cursor: pointer; }
@@ -104,32 +105,29 @@ class ManondTouchPanel extends Panel {
         }));
     };
 
-    window.addEventListener('pointerdown', e => {
+    const handlePointer = e => {
         if (e.target.tagName === 'CANVAS') {
-            e.stopPropagation();
-            bridge('mousedown', e);
+            if (e.type === 'pointerdown') e.stopPropagation();
+            const mouseType = e.type.replace('pointer', 'mouse');
+            bridge(mouseType, e);
         }
-    }, true);
-    window.addEventListener('pointermove', e => {
-        if (e.target.tagName === 'CANVAS') bridge('mousemove', e);
-    }, true);
-    window.addEventListener('pointerup', e => {
-        if (e.target.tagName === 'CANVAS') bridge('mouseup', e);
-    }, true);
+    };
+
+    window.addEventListener('pointerdown', handlePointer, true);
+    window.addEventListener('pointermove', handlePointer, true);
+    window.addEventListener('pointerup', handlePointer, true);
   }
 }
 
 export function start(editorController, pluginPath) {
   const tagName = "manond-touch-panel";
   
-  // Set the icon path relative to the plugin directory, like the reference
+  // Set the icon path
   ManondTouchPanel.prototype.iconPath = `${pluginPath}/icon.svg`;
 
   if (!customElements.get(tagName)) {
     customElements.define(tagName, ManondTouchPanel);
   }
   
-  // Create and add the panel
-  const panel = new ManondTouchPanel(editorController);
-  editorController.addSidebarPanel(panel, "right");
+  editorController.addSidebarPanel(new ManondTouchPanel(editorController), "right");
 }
