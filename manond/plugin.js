@@ -2,7 +2,7 @@ import Panel from "fontra/editor/panel.js";
 import { div } from "fontra/core/html-utils.js";
 
 /**
- * ManondTouchPanel wraps the logic from your Touch Kit into a Fontra Sidebar Panel.
+ * ManondTouchPanel wraps the logic from your Touch Kit into a Fontra Sidebar Panel.2
  */
 class ManondTouchPanel extends Panel {
   constructor(editorController) {
@@ -131,3 +131,4 @@ export function start(editorController, pluginPath) {
   
   editorController.addSidebarPanel(new ManondTouchPanel(editorController), "right");
 }
+
